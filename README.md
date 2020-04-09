@@ -8,10 +8,10 @@ You will need either to buy these files (see subfolder `com/nr/info.txt`) or one
 
 - The main program is within `Frames.java`.
 
-- To generate a mpeg-Video you need "ffmpeg" (https://ffmpeg.org/) and a bash shell to run the script `create2` in subfolder "mov"
+- To generate a mpeg-Video you need "ffmpeg" (https://ffmpeg.org/) and a bash shell to run the script `create2` in subfolder `mov`
 
 - To see some results point your browser to https://youtu.be/uk3x-sr6MQQ
 
-Happy coding
+Happy coding and stay healthy
 
 April 2020, V. Eitner 
