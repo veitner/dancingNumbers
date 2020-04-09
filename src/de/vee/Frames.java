@@ -1,0 +1,930 @@
+/*
+ * Dancing Numbers - Logistic growth applied to Covid-19
+ *
+ * A naive approach to predict the spread of virus
+ *
+ *
+ * Copyright (c) 2020 V. Eitner
+ *
+ * This file is part of "Dancing Numbers".
+ *
+ * "Dancing Numbers" is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * "Dancing Numbers" is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with "Dancing Numbers".  If not, see <https://www.gnu.org/licenses/>.
+ *
+ */
+
+package de.vee;
+
+import de.vee.model.*;
+import org.jfree.chart.*;
+import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
+import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.title.LegendTitle;
+import org.jfree.chart.title.TextTitle;
+import org.jfree.chart.title.Title;
+import org.jfree.data.Range;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYBarDataset;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
+import static de.vee.model.Bisection.find;
+import static de.vee.model.FunFactory.createFunction;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+
+public class Frames {
+    private final static DefaultXYDataset dataset = new DefaultXYDataset();
+    private static double TODAY = 75;
+    private static final int CHART_WIDTH = 1280;//(int) Math.round(1.8 * 640);
+    private static final int CHART_HEIGHT = 960;//(int) Math.round(1.8 * 480);
+    private static final int REPEAT_FRAME = 15;
+    private final int id;
+    private Input input;
+
+    private static void clearDataset() {
+        for (int i = dataset.getSeriesCount() - 1; i >= 0; i--) {
+            dataset.removeSeries(dataset.getSeriesKey(i));
+        }
+    }
+
+    private Frames(Input input, int id) {
+        this.input = input;
+        this.id = id;
+    }
+
+    private void createFrames(double xmax, boolean adjustY, boolean markLast) {
+        double[][] d = input.getData();
+        TODAY = d[0][d[0].length - 1] + 1;
+        TODAY += 5 - (int) TODAY % 5;
+        AmoebaModel m = step(input, null, adjustY, markLast);
+        analyse(input, m);
+        analyseDerivative(input, m, Math.max(xmax, TODAY), false, markLast);
+        estimateICU(input, m, Math.max(xmax, TODAY));
+    }
+
+    public static void main(String[] args) {
+        Locale.setDefault(Locale.ENGLISH);
+        try {
+            new Info(CHART_WIDTH, CHART_HEIGHT).save();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Input input = Input.get("China", 1428E6)
+                .withDelta(new double[]{0.1, 0.2, 0.1, 0, 0.005, 0.1, 0.2})
+                .withInitial(new double[]{1.E-5, 17, 14.E-2, 14, 0.04, 10, 0.1})
+                .withFileName("china_g.dat")
+                .nullifyData();
+        Frames frame = new Frames(input, 0);
+/*
+        frame.step(input.clone().withSuffix("0").nullifyData(), input.clone().withSuffix("1").nullifyData(), false, false);
+        frame.createFrames(TODAY, false, true);
+*/
+
+//too early
+        /*
+        input = Input.get("World", 447E6)
+                .withDelta(new double[]{0.1, 0.2, 0.1, 0})
+//                .withInitial(new double[]{1.E-5,17,14.E-2,14})
+                .withYMax(5E5);
+
+        frame = new Frames(input, 1);
+        frame.createFrames(360, true, false);
+
+        if (args.length < 100) return;
+*/
+
+///*
+        input = Input.get("Europe", 447E6)
+                .withInitial(new double[]{0.01, 2, 0.05, 1, 0.1, 4, 0.5})
+                .withDelta(new double[]{1e-5, 0.5, 0.001, 1e-3, 1e-2, 1e-1, 1e-2})
+                .withYMax(5E5)
+                .withInflectionPoint(false);
+        frame = new Frames(input, 1);
+        frame.createFrames(360, true, false);
+//*/
+        //     if (args.length < 100) return;
+
+///*
+        input = Input.get("Italy", 60E6)
+                .withInflectionPoint(false);
+        frame = new Frames(input, 2);
+        frame.createFrames(360, true, false);
+
+//        if (args.length < 100) return;
+//*/
+        input = Input.get("Spain", 46.7E6)
+                .withInflectionPoint(false);
+        frame = new Frames(input, 3);
+        frame.createFrames(360, true, false);
+
+//        if (args.length < 100) return;
+
+        input = Input.get("France", 67E6)
+                .withInflectionPoint(false);
+        frame = new Frames(input, 4);
+        frame.createFrames(360, true, false);
+/*
+//        if (args.length < 100) return;
+        input = Input.get("Germany", (long) 84E6).withDelta(new double[]{0.05, 1, 0.05, 0.5, 0.02, 1, 0.2});
+        frame = new Frames(input, 5);
+//        frame.step(input.clone().withSuffix("1").nullifyData(), input.clone().withSuffix("2").nullifyData(), false, false); //creates an adjusted dataset
+        frame.createFrames(360, true, false);
+
+*/
+//      if (args.length < 100) return;
+
+        input = Input.get("Poland", 38.66E6).withInflectionPoint(false);
+        frame = new Frames(input, 6);
+        frame.createFrames(360, true, false);
+
+
+        input = Input.get("Austria", 38.66E6).withInflectionPoint(false);
+        frame = new Frames(input, 8);
+        frame.createFrames(360, true, false);
+
+        input = Input.get("Switzerland", 38.66E6).withInflectionPoint(false);
+        frame = new Frames(input, 9);
+        frame.createFrames(360, true, false);
+
+        input = Input.get("Greece", 10.7E6).withInflectionPoint(false);
+        frame = new Frames(input, 10);
+        frame.createFrames(360, true, false);
+
+        /*
+        input = Input.US();
+        m=step("0071", input, null, true, false);
+        analyse("0072", input);
+        analyseDerivative("0073_5", input, 360, false, false);
+        estimateICU("0074_5", input, 360);
+/*
+        Input input = Input.get("Greece",10.7E6);
+        m=step("N", input, null, true);
+        analyse("O", input);
+        analyseDerivative("P", input, 360, false);
+*/
+    }
+
+    private boolean chartExists(String prefix, int postfix) {
+//        File file = new File(String.format("gr/%s_p_%04d.png", prefix, postfix));
+//        return !file.exists();
+        return false;
+    }
+
+    private void analyseDerivative(Input input, AmoebaModel model, double xmax, boolean scale, boolean markLast) {
+        boolean deaths = true;
+        String prefix = String.format("0%02d3_5", id);
+        System.out.println(input.getTitle() + ": Processing (analyseDerivative) ....");
+        clearDataset();
+        double[][] dd = input.getData();
+        double[] x = Arrays.copyOf(dd[0], dd[0].length);
+        double[] y = Arrays.copyOf(dd[1], dd[1].length);
+        double[] dr = null;
+        if (dd.length > 2) {
+            dr = Arrays.copyOf(dd[2], dd[2].length); //deaths
+        }
+        int count = x.length;
+
+        double[][] a = model.getResult();
+        int start = model.getStart();
+        JFreeChart chart = null;
+        for (int l = Math.max(start, count - 12); l < count; l++) {
+            if (chartExists(prefix, l)) continue;
+/*
+                for (int j = 0; j < 4; j++) {
+                    v0[j] = a[l][j];
+                }
+*/
+            LogisticFunc g = createFunction(a[l], input.getPopulationSize(), x, y);
+            int n = (int) (xmax * 4) + 1;
+            double[] dx = new double[n];
+            double[] dy = new double[n];
+            double max = 0;
+            double xd = 0;
+            double ddx = xmax / (n - 1);
+            int imax = -1;
+            for (int i = 0; i < dx.length; i++) {
+                dx[i] = xd;
+                //                    if (!deaths) {
+                dy[i] = g.derivative(xd);
+//
+                xd += ddx;
+            }
+            if (deaths) {
+                //                   dy = DeathRate.getDeaths(dx, g);
+            }
+            for (int i = 0; i < dx.length; i++) {
+                if (dy[i] > max) {
+                    max = dy[i];
+                    imax = i;
+                }
+            }
+            if (scale) {
+                for (int i = 0; i < dx.length; i++) {
+                    dy[i] /= max;
+                }
+            }
+
+            dataset.addSeries("New infections per time (model)", createSeries(dx, dy, dx[dx.length - 1] + 1));
+
+            addMaximum("infections", imax, dx, dy);
+
+            double[][] result = model.getResult();
+            int im = Math.min(imax, result.length) - 1;
+            double deathRate;// = result[im][4];
+            double shift;// = result[im][5];
+            deathRate = model.getDeathRate(max);
+            shift = model.getShift(max);
+            double p = model.getP(max);
+
+            double[] dy1d = DeathRate.getRate(dx, g, deathRate, shift, p);
+
+            dataset.addSeries("deaths per time (model)", createSeries(dx, dy1d, dx[dx.length - 1] + 1));
+
+            addMaximum("deaths per time", -1, dx, dy1d);
+
+
+            chart = ChartFactory.createXYLineChart(
+                    String.format("Rate of new infections per time for %s", input.getName()),
+                    "Days since 01/20/2020",
+                    scale ? "Relative number of new infections per time" : "Rate of new infections per time",
+                    dataset,
+                    PlotOrientation.VERTICAL,
+                    true, false, false);
+
+            int day = (int) Math.round(x[l]);
+            chart.addSubtitle(new TextTitle(getDateStringLong(day)));
+
+            XYPlot plot = chart.getXYPlot();
+
+            //    renderer.setLabelGenerator(generator);
+
+            plot.setRenderer(new Renderer_For_Derivative(dataset, input));
+
+            DefaultXYDataset ds = new DefaultXYDataset();
+
+            n = l + 1;
+
+            double[] dy1 = new double[n];
+            double[] dx1 = new double[n];
+
+            double[] dry1 = new double[n];
+            for (int i = 0; i < dry1.length - 1; i++) {
+                if (deaths && dr != null) {
+                    dry1[i] = Math.max(dr[i + 1] - dr[i], 0);
+                } else {
+                    dry1[i] = Math.max(y[i + 1] - y[i], 0);
+                }
+                dx1[i] = x[i] + 0.5; //shift because of "integration"
+            }
+            ds.addSeries("New deaths per time (reported)", createSeries(dx1, dry1, xmax));
+
+            for (int i = 0; i < dy1.length - 1; i++) {
+                dy1[i] = Math.max(y[i + 1] - y[i], 0);
+                dx1[i] = x[i] + 0.5; //shift because of "integration"
+            }
+
+            ds.addSeries("New infections per time (reported)", createSeries(dx1, dy1, xmax));
+
+            XYBarDataset dsb = new XYBarDataset(ds, 1.);
+            plot.setDataset(1, dsb);
+            final XYBarRenderer renderer = new XYBarRenderer() {
+                @Override
+                public Paint getItemPaint(int series, int column) {
+                    if (markLast) {
+                        if (column > 60) return Color.red;
+                    }
+                    if (series < 1) {
+                        return new Color(0xC080C0);
+                    } else {
+                        return Color.gray;
+
+                    }
+                }
+
+                @Override
+                public Paint getSeriesPaint(int series) {
+                    if (series < 1) {
+                        return new Color(0xC080C0);
+                    } else {
+                        return Color.gray;
+                    }
+                }
+            };
+
+            renderer.setShadowVisible(false);
+            renderer.setBarPainter(new StandardXYBarPainter());
+
+            plot.setRenderer(1, renderer);
+
+            adjustPlot(plot, 0, xmax);
+            saveChart(chart, prefix, l, true);
+        }
+        if (chart != null) {
+            for (int i = count; i < count + REPEAT_FRAME; i++) {
+                saveChart(chart, prefix, i, true); //several frames to pause
+            }
+        }
+
+    }
+
+    private void addMaximum(String key, int imax, double[] x, double[] y) {
+        int max = imax;
+        double dmax = -1;
+        if (max < 0) {
+            for (int i = 0; i < x.length; i++) {
+                if (y[i] > dmax) {
+                    dmax = y[i];
+                    max = i;
+                }
+            }
+        }
+
+        if ((max > 0) && (max < y.length - 2)) {
+            double[] mx = new double[2];
+            double[] my = new double[2];
+            mx[0] = x[max];
+            mx[1] = x[max];
+            my[0] = 0;
+            my[1] = y[max] + 10;
+            dataset.addSeries("Maximum of " + key, createSeries(mx, my, mx[mx.length - 1] + 1));
+        }
+    }
+
+    private void estimateICU(Input input, AmoebaModel model, double xmax) {
+        String prefix = String.format("0%02d4_5", id);
+
+        System.out.println(input.getTitle() + ": Processing (estimateICU) ....");
+        clearDataset();
+        double[][] dd = input.getData();
+        double[] x = Arrays.copyOf(dd[0], dd[0].length);
+        double[] y = Arrays.copyOf(dd[1], dd[1].length);
+        int count = x.length;
+
+        double[][] a = model.getResult();
+        int start = model.getStart();
+        JFreeChart chart = null;
+        for (int l = count - 1; l < count; l++) {
+            if (chartExists(prefix, l)) continue;
+            LogisticFunc g = createFunction(a[l], input.getPopulationSize(), x, y);
+
+            int n = (int) (xmax * 4) + 1;
+            double[] x1 = new double[n];
+            double xd = 0;
+            double ddx = xmax / (n - 1);
+            for (int i = 0; i < n; i++) {
+                x1[i] = xd;
+                xd += ddx;
+            }
+            double[] params = model.getResult()[l];
+            int m = params.length - 1;
+            double[] deaths = DeathRate.getRate(x1, g, params[m - 2], params[m - 1], params[m]);
+
+            chart = ChartFactory.createXYLineChart(
+                    String.format("Estimated demand on ICU of model for %s", input.getName()),
+                    "Days since 01/20/2020",
+                    "Number of required ICU",
+                    dataset,
+                    PlotOrientation.VERTICAL,
+                    true, false, false);
+
+            int day = (int) Math.round(x[l]);
+            chart.addSubtitle(new TextTitle(getDateStringLong(day)));
+
+            XYPlot plot = chart.getXYPlot();
+
+            //      plot.setRenderer(new Renderer_For_Derivative(dataset));
+
+
+            double[] p = {3, 5, 8};
+
+            for (int i = 0; i < p.length; i++) {//percentage
+                for (int j = 0; j < p.length; j++) {//days
+                    /*
+                    int k = x1.length;
+                    double[] y1 = new double[k];
+                    for (int q = 0; q < k; q++) {
+                        int r = 0;
+                        while ((x1[q + r] - x1[q]) < p[j]) {
+                            y1[q] += deaths[q + r] * ddx;
+                            r++;
+                            if (q + r >= k) break;
+                        }
+                        y1[q] *= p[i];
+                    }
+                    dataset.addSeries(String.format("Assuming %d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(p[j])), createSeries(x1, y1, x1[x1.length - 1] + 1));
+                    */
+                    double[] y11 = Convolve.eval(x1, deaths, p[i], p[j], 0.5);
+                    dataset.addSeries(String.format("%d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(p[j])), createSeries(x1, y11, x1[x1.length - 1] + 1));
+                }
+            }
+
+            adjustPlot(plot, 0, xmax);
+            saveChart(chart, prefix, l, true);
+        }
+        if (chart != null) {
+            for (int i = count; i < count + 3 * REPEAT_FRAME; i++) {
+                saveChart(chart, prefix, i, true); //several frames to pause
+            }
+        }
+    }
+
+    private void analyse(Input input, AmoebaModel model) {
+        System.out.println(input.getTitle() + ": Processing (analyse) ....");
+        String prefix = String.format("0%02d2", id);
+        clearDataset();
+        double[][] dd = input.getData();
+        double[] x = Arrays.copyOf(dd[0], dd[0].length);
+
+        double[][] a = model.getResult();
+        int start = model.getStart();
+
+        clearDataset();
+        for (int l = 0; l < 3; l++) {
+            double[][] d = new double[2][x.length];
+            for (int j = start + 1; j < x.length; j++) {
+                double delta = (a[j][l] - a[j - 1][l]) / a[j - 1][l];
+                if (delta < -1) delta = -1;
+                if (delta > 1) delta = 1;
+                d[0][j] = x[j];
+                d[1][j] = delta;
+            }
+            int m = 0;
+            while (d[0][m] < 1) {
+                m++;
+            }
+            d[0] = Arrays.copyOfRange(d[0], m, d[0].length);
+            d[1] = Arrays.copyOfRange(d[1], m, d[1].length);
+            dataset.addSeries(String.format("Parameter %d", l), d);
+        }
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                String.format("Parameter of model for %s", input.getName()),
+                "Days since 01/20/2020",
+                "Rel. change in parameter",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true, false, false);
+
+        XYPlot plot = chart.getXYPlot();
+        adjustPlot(plot, 1., TODAY);
+
+        plot.getRangeAxis().setRange(new Range(-1, 1));
+
+        plot.setRenderer(new Renderer_For_Analysis());
+
+        for (int i = 0; i < REPEAT_FRAME; i++) {
+            saveChart(chart, prefix, i, false); //several frames to pause the display
+        }
+
+    }
+
+    private AmoebaModel step(Input input0, Input input1, boolean adjustY, boolean markLast) {
+        String prefix = String.format("0%02d1_1", id);
+        if (input1 != null) {
+            prefix = String.format("0%02d1_0", id);
+        }
+        clearDataset();
+        System.out.println(input0.getTitle() + ": Processing (step) ....");
+        double[][] dd = input0.getData();
+        double[] x = Arrays.copyOf(dd[0], dd[0].length);
+        double[] y = Arrays.copyOf(dd[1], dd[1].length);
+        double[] dr = null;
+        if (dd.length > 2) {
+            dr = Arrays.copyOf(dd[2], dd[2].length);
+        }
+        double[] x1 = null;
+        double[] y1 = null;
+        double[] dr1 = null;
+        if (input1 != null) {
+            dd = input1.getData();
+            x1 = Arrays.copyOf(dd[0], dd[0].length);
+            y1 = Arrays.copyOf(dd[1], dd[1].length);
+            if (dd.length > 2) {
+                dr1 = Arrays.copyOf(dd[2], dd[2].length);
+            }
+        }
+        AmoebaModel m;
+
+        m = new AmoebaModel(x, y, dr, input0);
+        int start = m.getStart();
+        double[][] a = m.getResult();
+        double[][] a1 = null;
+
+        AmoebaModel m1 = null;
+        if (x1 != null) {
+            m1 = new AmoebaModel(x1, y1, dr1, input1);
+            a1 = m1.getResult();
+        }
+
+        LogisticFunc gp = null;
+        LogisticFunc gp1 = null;
+
+        for (int j = 0; j < start; j++) {
+            if (chartExists(prefix, j)) continue;
+
+            double omax = input0.getYmax();
+            if (adjustY) {
+                if (y[j] < 1000) input0.setYMax(1000.);
+            }
+            createChart(prefix, gp, null, gp1, null, input0, input1, x, y, m, x1, y1, (int) (Math.round(x[j])), false, 100000);
+            input0.setYMax(omax);
+        }
+
+        double[] v0;
+        double[] v1 = null;
+        double xmax = 0.;
+        boolean first = true;
+        int count = x.length;
+        if (x1 != null) count += x1.length;
+        int xmaxo = (int) Math.round(x[start]);
+        LogisticFunc g = null;
+        LogisticFunc g1 = null;
+        for (int l = start; l < count; l++) {
+            if (first) {
+                if (l >= x.length) {
+                    int k = 0;
+                    while (x1[k] < xmax) {
+                        if (k + 1 >= x1.length) break;
+                        k++;
+                    }
+                    l = k;
+                    xmax = x1[l];
+                    first = false;
+                } else {
+                    xmax = x[l];
+                }
+            } else {
+                if (l >= x1.length) break;
+                xmax = x1[l];
+            }
+
+
+            if (first) {
+                v0 = a[l];
+            } else {
+                v0 = a[a.length - 1];
+                v1 = a1[l];
+            }
+            if (chartExists(prefix, l)) continue;
+
+            double omax = input0.getYmax();
+            if (adjustY) {
+                if (y[l] < 1000) input0.setYMax(1000.);
+                else if (y[l] < 10000) input0.setYMax(10000.);
+                else if (y[l] < 100000) input0.setYMax(100000.);
+                else if (y[l] < 200000) input0.setYMax(200000.);
+                else if (y[l] < 500000) input0.setYMax(500000.);
+                else if (y[l] < 1E6) input0.setYMax(1E6);
+                else if (y[l] < 1E7) input0.setYMax(1E7);
+                else if (y[l] < 1E8) input0.setYMax(1E8);
+            }
+            if (g != null) {
+                xmaxo += 1;
+                while (xmaxo < xmax) {
+                    createChart(prefix, gp, g, gp1, g1, input0, input1, x, y, m, x1, y1, xmaxo, false, 100000);
+                    xmaxo += 1;
+                }
+            }
+            xmaxo = (int) Math.round(xmax);
+            g = createFunction(v0, input0.getPopulationSize(), x, y);
+            if (!first) {
+                g1 = createFunction(v1, input1.getPopulationSize(), x, y);
+            }
+            int num = 100000;
+            if (markLast) { //begin of a new wave? //todo: calculate the distance to the model and mark
+                if (x1 != null) {
+                    if (xmax > x1[0]) {
+                        num = x1.length - 3;
+                    }
+                } else {
+                    num = x.length - 3;
+                }
+            }
+            createChart(prefix, gp, g, gp1, g1, input0, input1, x, y, m, x1, y1, (int) Math.round(xmax), l == count - 1, num);
+
+            input0.setYMax(omax);
+            gp = g;
+            gp1 = g1;
+
+            if ((g1 != null) && (m1 != null)) {
+                if (x1.length > x.length / 4) {
+                    File f = new File("s_" + input.getFileName());
+                    try {
+                        FileWriter fw = new FileWriter(f);
+                        for (int k = 0; k < x.length; k++) {
+                            //todo: blabla
+                            double ny = g.evaluate(x[k] - 0.5);
+                            double y2 = g1.evaluate(x[k]);
+                            if (ny > 0.5) { //overflow otherwise
+                                double z = (y[k] - ny) / ny;
+                                y2 += z * y2;
+                            } else {
+                                y2 = y[k];
+                            }
+                            String deaths = "";
+                            if (dr != null) {
+                                if (k > 0) {
+                                    double de = dr[k] - dr[k - 1];
+                                    if (de > 0) deaths = String.format("%.0f", de);
+                                }
+                            }
+                            fw.write(String.format("%.0f %.0f %s\n", x[k] + 1, y2, deaths)); //offset - see input
+                        }
+                        for (int i = 0; i < x1.length; i++) {
+                            String deaths = "";
+                            if (x1[i] < x[x.length - 1]) continue;
+                            if (dr1 != null) {
+                                if (i > 0) {
+                                    double de = dr1[i] - dr1[i - 1];
+                                    if (de > 0) deaths = String.format("%.0f", de);
+                                }
+                            }
+                            fw.write(String.format("%.0f %.0f %s\n", x1[i] + 1, y1[i], deaths)); //shift of one - see readData
+                        }
+
+                        fw.flush();
+                        fw.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+
+
+
+               /* if (l == x1.length - 1) { //create an artifical dataset
+                    try {
+                        FileWriter fw = new FileWriter(new File(input.fileName));
+                        double b1 = (y1[1] - y1[0]) / (x1[1] - x1[0]);
+                        double xx = y1[0] + b1 * (x[x.length - 1] - x1[0]);
+//                        double xx = g1.evaluate(x[x.length - 1]);
+                        double yy = y[y.length - 1];
+                        double rd = (xx - yy) / yy;
+                        for (int i = 0; i < x.length; i++) {
+                            String deaths = "";
+                            if (dr != null) {
+                                if (i > 0) {
+                                    double de = dr[i] - dr[i - 1];
+                                    if (de > 0) deaths = String.format("%.0f", de);
+                                }
+                            }
+                            double ynew = y[i] * (1. + rd);
+                            fw.write(String.format("%.0f %.0f %s\n", x[i] + 1, ynew, deaths)); //shift of one - see readData
+                        }
+                        for (int i = 0; i < x1.length; i++) {
+                            String deaths = "";
+                            if (dr1 != null) {
+                                if (i > 0) {
+                                    double de = dr1[i] - dr1[i - 1];
+                                    if (de > 0) deaths = String.format("%.0f", de);
+                                }
+                            }
+                            fw.write(String.format("%.0f %.0f %s\n", x1[i] + 1, y1[i], deaths)); //shift of one - see readData
+                        }
+                        fw.flush();
+                        fw.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+                */
+            }
+        }
+        return m;
+    }
+
+    private void createChart(String prefix, LogisticFunc gp, LogisticFunc g, LogisticFunc gp1, LogisticFunc g1, Input input, Input input1, double[] x, double[] y, Model model, double[] x1, double[] y1, int day, boolean pause, int mark) {
+        String dateStringLong = getDateStringLong(day);
+        int xmax = (int) Math.round(Math.min(x[x.length - 1], day));
+        dataset.addSeries("Infections reported", createSeries(x, y, xmax));
+        int xmax1 = 0;
+        if (input1 != null) {
+            xmax1 = (int) Math.round(Math.min(x1[x1.length - 1], day));
+            if (x1[0] <= day)
+                dataset.addSeries("Infections reported", createSeries(x1, y1, xmax1));
+        }
+        if (gp != null) {
+            dataset.addSeries("Infections previous model", gp.getSeriesData(xmax + 1));
+        }
+        if (g != null) {
+            dataset.addSeries("Infections current model", g.getSeriesData(xmax + 2));
+        }
+        if (gp1 != null) {
+            dataset.addSeries("Infections previous model", gp1.getSeriesData(xmax1 + 1));
+        }
+        if (g1 != null) {
+            dataset.addSeries("Infections current model", g1.getSeriesData(xmax1 + 2));
+        }
+
+        double[][] data = input.getData();
+        if (data.length > 2) {
+            double[] dx = data[0];
+            double[] deaths = data[2];
+            dataset.addSeries("Deaths reported", createSeries(dx, deaths, xmax));
+            if (g != null) {
+                double[] dy1d = DeathRate.getDeaths(dx, g, model.getDeathRate(xmax), model.getShift(xmax), model.getP(xmax));
+                dataset.addSeries("Deaths current model", createSeries(dx, dy1d, xmax + 2));
+            }
+        }
+
+        JFreeChart chart = ChartFactory.createXYLineChart(
+                String.format("Reported cases for %s", input.getName()),
+                "Days since 01/20/2020",
+                "Number of reported cases",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true, false, false);
+
+
+        chart.addSubtitle(new TextTitle(dateStringLong)); //chart.setSubtitles(subTitles);
+        XYPlot plot = chart.getXYPlot();
+        plot.setRenderer(new Renderer_For_Cumulative(dataset, input, mark));
+
+
+        adjustPlot(plot, input.getYmax(), TODAY);
+
+        saveChart(chart, prefix, day, false);
+
+        if (pause) {
+            for (int i = day + 1; i < day + REPEAT_FRAME; i++) {
+                saveChart(chart, prefix, i, false); //several frames to pause the display
+            }
+        }
+
+
+    }
+
+    private void adjustPlot(XYPlot plot, double ymax, double xmax) {
+
+        JFreeChart chart = plot.getChart();
+        TextTitle tt = chart.getTitle();
+        Font tf = tt.getFont();
+        TextTitle newTitle = new TextTitle(tt.getText(), tf.deriveFont(Font.BOLD, (int) (tf.getSize() * 1.5)));
+        chart.setTitle(newTitle);
+
+        XYItemRenderer renderer = plot.getRenderer();
+
+        BasicStroke stroke = new BasicStroke(2.5f);
+
+        for (int i = 0; i < plot.getSeriesCount(); i++) {
+            renderer.setSeriesStroke(i, stroke);
+        }
+
+        plot.setDomainGridlinesVisible(true);
+        plot.setRangeGridlinesVisible(true);
+        plot.setBackgroundPaint(new Color(255, 255, 255, 255));
+        plot.setDomainGridlinePaint(new Color(128, 128, 128));
+        plot.setRangeGridlinePaint(new Color(128, 128, 128));
+
+        Font font = plot.getDomainAxis().getLabelFont();
+        font = font.deriveFont(Font.BOLD, (int) (font.getSize() * 1.2));
+        Font font1 = font.deriveFont(Font.BOLD, (int) (font.getSize() * 1.2));
+
+        plot.getDomainAxis().setLabelFont(font);
+        plot.getRangeAxis().setLabelFont(font);
+
+        ValueAxis axis = plot.getRangeAxis();
+        axis.setLabelFont(font1);
+        axis.setTickLabelFont(font);
+        axis.setLabelPaint(Color.black);
+        axis.setTickLabelPaint(Color.black);
+        axis = plot.getDomainAxis();
+        axis.setLabelFont(font1);
+        axis.setTickLabelFont(font);
+        axis.setLabelPaint(Color.black);
+        axis.setTickLabelPaint(Color.black);
+
+        font = font.deriveFont(Font.BOLD);
+        LegendItemCollection lic = plot.getLegendItems();
+        for (int i = 0; i < lic.getItemCount(); i++) {
+            LegendItem l = lic.get(i);
+            l.setLabelFont(font);
+            l.setLabelPaint(Color.black);
+        }
+
+        Font fontLarger = font.deriveFont(Font.BOLD, (int) (font.getSize() * 1.2));
+        for (int i = 0; i < chart.getSubtitleCount(); i++) {
+            Title t = chart.getSubtitle(i);
+            if (t instanceof TextTitle) {
+                TextTitle tit = (TextTitle) t;
+                tit.setFont(fontLarger);
+                tit.setPaint(Color.black);
+            }
+            if (t instanceof LegendTitle) {
+                LegendTitle tit = (LegendTitle) t;
+                tit.setItemFont(font);
+                tit.setItemPaint(Color.black);
+            }
+        }
+
+
+        if (Math.abs(ymax) > 0.) {
+            plot.getRangeAxis().setRange(new Range(0, ymax));
+        }
+        plot.getDomainAxis().setRange(new Range(0, xmax));
+    }
+
+    /**
+     * Embeds a textual watermark over a source image to produce
+     * a watermarked one.
+     *
+     * @param text            The text to be embedded as watermark.
+     * @param sourceImageFile The source image file.
+     * @param destImageFile   The output image file.
+     */
+    private void addTextWatermark(String text, File sourceImageFile, File destImageFile) {
+        try {
+            BufferedImage sourceImage = ImageIO.read(sourceImageFile);
+            Graphics2D g2d = (Graphics2D) sourceImage.getGraphics();
+
+            // initializes necessary graphic properties
+            AlphaComposite alphaChannel = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
+            g2d.setComposite(alphaChannel);
+            g2d.setColor(Color.RED);
+            g2d.rotate(Math.toRadians(-34.));
+            g2d.setFont(new Font("Arial", Font.BOLD, 64));
+            FontMetrics fontMetrics = g2d.getFontMetrics();
+            Rectangle2D rect = fontMetrics.getStringBounds(text, g2d);
+
+            // calculates the coordinate where the String is painted
+            int centerX = (sourceImage.getWidth() - (int) rect.getWidth()) / 2;
+            int centerY = sourceImage.getHeight() / 2;
+
+            // paints the textual watermark
+            g2d.drawString(text, centerX - (int) rect.getWidth() / 4, centerY + (int) rect.getWidth() / 4);
+            g2d.rotate(-Math.toRadians(-34.));
+
+            ImageIO.write(sourceImage, "png", destImageFile);
+            g2d.dispose();
+
+        } catch (IOException ex) {
+            System.err.println(ex);
+        }
+    }
+
+    private void saveChart(JFreeChart chart, String prefix, int postfix, boolean waterMark) {
+        File file = new File(String.format("gr/%s_p_%04d.png", prefix, postfix));
+        try {
+            ChartUtils.saveChartAsPNG(file, chart, CHART_WIDTH, CHART_HEIGHT);
+            if (waterMark) {
+                File f2 = new File(file.getName() + ".wm");
+                addTextWatermark("Beware: Prediction based on simple model", file, f2);
+                Files.copy(f2.toPath(), file.toPath(), REPLACE_EXISTING);
+                Files.delete(f2.toPath());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private double[][] createSeries(double[] x, double[] y, double xmax) {
+        int n = find(x, xmax) + 1;
+        double[][] data = new double[2][n];
+        for (int i = 0; i < n; i++) {
+            data[0][i] = x[i];
+            data[1][i] = y[i];
+        }
+        return data;
+    }
+
+    private String getDateStringLong(int day) {
+        DateFormat df = new SimpleDateFormat("dd_MM");
+        Date date = new Date();
+        String dateString = df.format(date);
+        df = new SimpleDateFormat("MM/dd/Y");
+        Calendar c = Calendar.getInstance();
+        c.set(2020, Calendar.JANUARY, 20, 12, 0);
+        Date start = c.getTime();
+        date = new Date(start.getTime() + day * 24 * 60 * 60 * 1000L);
+        return df.format(date) + ", day " + ((date.getTime() - start.getTime()) / 1000L / 60 / 60 / 24);
+    }
+
+}

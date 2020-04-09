@@ -1,0 +1,12 @@
+
+Obacht / Caution:
+
+The following predictions are based on a simple model.
+This model cannot predict future changes in behaviour of the investigated group.
+
+The calculated curve is based on the cumulative Covid-19 cases reported and the population size.
+That means, if a change in behaviour causes a delayed decrease in the infection rate, this decrease is even more delayed in the outcome of the model.
+The mean value of the inflection point is used for stabilization, causing some additional delay.
+
+The previous slide's prediction is restricted to two days. The following slides extended the prediction to 360 days, so that the peak (maximum) is included in the graphs.
+The absolute values depicted on the y-axis are a prediction based on the assumption that the behaviour of the investigated group remains exactly the same in the future as it was in the past.

@@ -1,0 +1,7 @@
+
+
+The method of reporting/investigation has changed in-between...
+
+Therefore, the section of the chinese incidence data between day 0 and days 27 were recalculated to smoothly match the remaining
+
+The algorithm is applied to this adjusted dataset

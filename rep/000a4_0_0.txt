@@ -1,0 +1,8 @@
+
+Estimate the number of cases requiring intensive care units (ICU)
+
+It is assumed that at least all death cases would require ICU for some days
+
+Caution:
+The number of future death cases as predicted by the simple model are summed up - if the parameter are not stable this might result in a completely wrong number
+

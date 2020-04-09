@@ -1,0 +1,16 @@
+
+
+Adaptation/Fitting of a logistic growth function to Covid-19 data reported by WHO
+(Datasource: https://opendata.ecdc.europa.eu/covid19/casedistribution/csv)
+
+
+Logistic growth function: H. Heuser (2006) Gewöhnliche Differentialgleichungen. B.G. Teubner Verlag
+
+Fit: C.F. Gauss (reprint 2018) Abhandlungen zur Methode der kleinsten Quadrate. Inktank publishing
+
+Minimization: Amoeba, Numerical Recipes (http://apps.nrbook.com/c/index.html, page 408)
+
+
+
+
+April 2020, V. Eitner

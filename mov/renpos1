@@ -1,0 +1,60 @@
+#!/bin/bash
+srcdir=../gr
+trgdir=../gr1
+rm -f $trgdir/*.png
+files=`ls $srcdir`
+for i in $(seq 1 25)
+do
+# cover
+  cp $srcdir/0000_0_0.png $srcdir/0000_0_$i.png
+  cp $srcdir/0000_1_0.png $srcdir/0000_1_$i.png
+# data
+  cp $srcdir/0001_0_0.png $srcdir/0001_0_$i.png
+# explanation
+  cp $srcdir/0001_1_0.png $srcdir/0001_1_$i.png
+#  cp $srcdir/0005_1_0.png $srcdir/0051_1_$i.png
+for j in $(seq 0 9)
+do
+# data
+  cp $srcdir/00${j}1_0_0.png $srcdir/00${j}1_0_$i.png
+  cp $srcdir/00${j}2_0_0.png $srcdir/00${j}2_0_$i.png
+  cp $srcdir/00${j}3_2_0.png $srcdir/00${j}3_2_$i.png
+  cp $srcdir/00${j}3_3_0.png $srcdir/00${j}3_3_$i.png
+  cp $srcdir/00${j}4_0_0.png $srcdir/00${j}4_0_$i.png
+done
+for j in $(seq 10 15)
+do
+# data
+  cp $srcdir/0${j}1_0_0.png $srcdir/0${j}1_0_$i.png
+  cp $srcdir/0${j}2_0_0.png $srcdir/0${j}2_0_$i.png
+  cp $srcdir/0${j}3_2_0.png $srcdir/0${j}3_2_$i.png
+  cp $srcdir/0${j}3_3_0.png $srcdir/0${j}3_3_$i.png
+  cp $srcdir/0${j}4_0_0.png $srcdir/0${j}4_0_$i.png
+done
+# end
+#  cp $srcdir/9999_0_0.png $srcdir/9999_0_$i.png
+  cp $srcdir/9999_1_0.png $srcdir/9999_1_$i.png
+  cp $srcdir/9999_2_0.png $srcdir/9999_2_$i.png
+done
+
+for i in $(seq 26 32)
+do
+for j in $(seq 0 9)
+do
+#long text - suspend a bit 0003_1_0
+  cp $srcdir/00${j}4_0_0.png $srcdir/00${j}4_0_$i.png
+#  cp $srcdir/9999_0_0.png $srcdir/9999_0_$i.png
+#  cp $srcdir/9999_1_0.png $srcdir/9999_1_$i.png
+done
+done
+
+# let the file system recover (external usb device)
+sleep 2
+n=0
+for file in $files; do
+#  echo Processing file $file
+  (( n += 1 ))
+  j=$(printf "%03d" $n)
+  cp $srcdir/$file $trgdir/frame_$j.png
+done
+echo Total files: $n

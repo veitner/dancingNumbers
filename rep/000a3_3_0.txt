@@ -1,0 +1,18 @@
+
+Rate of infections per day - Number of reported new infections and the derivative of the model
+
+The time of the maximum is the turning point (inflection point) - from that time there will be fewer new infections per day
+
+It is assumed that the number of deaths is somehow delay-related to the number of new infections. The death rate is estimated by applying a convolution.
+
+Convolution:
+h(t)/q = (f*g)(t-d)
+q: mortality rate (free parameter)
+f=f(s,d): gaussian probability function
+g: derivative of logistic growth function
+t: time
+d: delay (free parameter)
+s=p*d: sigma (p: free parameter)
+
+
+The numbers dance until the behavior of the investigated cluster is stable or until the virus becomes extinct

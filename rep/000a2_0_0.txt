@@ -1,0 +1,13 @@
+
+
+Parameter stability
+
+
+Each parameter should converge towards a constant,
+i.e. the relative change should become small
+
+
+The more consistent the behavior of the investigated cluster (e.g. country) the more reliable the prediction
+
+
+If the behavior of the investigated cluster changes suddenly (e.g. closure of schools, social distancing), the numbers start dancing again, and it takes some time until the graph stabilizes again

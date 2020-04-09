@@ -1,0 +1,23 @@
+#!/bin/bash
+./renpos1
+./renpos1
+day=`date +%d`
+#march
+#day=$((day+39))
+#april
+#day=$((day+39+31))
+day=$((10#$day+70))
+rm logisticGrowth_${day}.mp4
+ffmpeg -framerate 6 -i ../gr1/frame_%03d.png -c:v libx264 \
+-profile:v high -vprofile high -crf 10 -pix_fmt yuv420p logisticGrowth_${day}.mp4
+
+exit
+
+ffmpeg -framerate 2 -i ../gr1/frame_%03d.png -c:v libx264 \
+-profile:v high -vprofile high -crf 10 -pix_fmt yuv420p covid19.mp4
+
+rm covid19_1.mp4
+ffmpeg -framerate 8 -filter:v "setpts=0.5*PTS" -i ../gr1/frame_%03d.png -c:v libx264 \
+-profile:v high -vprofile high -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=-1:480 -threads 0 -crf 2 -pix_fmt yuv420p covid19_1.mp4
+
+#-profile:v high -vprofile high -preset slow -b:v 500k -maxrate 500k -bufsize 1000k -vf scale=-1:480 -threads 0 -crf 2 -pix_fmt yuv420p covid19_1.mp4

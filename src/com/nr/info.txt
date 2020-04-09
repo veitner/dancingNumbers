@@ -1,0 +1,11 @@
+Due to license restrictions following files are not part of this repo:
+
+NRUtil.java
+RealValueFun.java
+min/Amoeba.java
+
+But a diff file for Amoeba.java is included (Amoeba.java.diff), because it was extended to respect some constraints in function amotry.
+
+You either need to buy the source code from "http://www.numerical.recipes/" or one of the books and key in the code
+
+Or you replace "Amoeba" by some other minimization routine (e.g. Levenberg-Marquardt)
