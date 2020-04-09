@@ -12,6 +12,9 @@ You will either need to buy these files (see subfolder `com/nr/info.txt`) or rea
 
 - To see some results point your browser to https://youtu.be/uk3x-sr6MQQ
 
+#####Dependencies
+- JFreeChart (http://www.jfree.org/jfreechart/); License: LGPL (http://www.jfree.org/lgpl.php)
+
 Happy coding and stay healthy
 
 April 2020, V. Eitner 
