@@ -4,7 +4,7 @@ Logistic growth applied to Covid-19
 A naive approach to predict the spread of virus
 
 - The programm is written in __Java__ using some routines from ___Numerical Recipes___. Due to license restrictions these files are not included here. 
-You will need either to buy these files (see subfolder `com/nr/info.txt`) or one of the books to key them in manually.
+You will either need to buy these files (see subfolder `com/nr/info.txt`) or read one of the books to key them in manually.
 
 - The main program is within `Frames.java`.
 
