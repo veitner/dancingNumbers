@@ -7,7 +7,7 @@ A naive approach to predict the spread of virus
 You will either need to buy these files (see subfolder `com/nr/info.txt`) or read one of the books to key them in manually.
   >Dependencies
   > - **[Numerical Recipes](http://www.numerical.recipes/)**
-  > - **[JFreeChart](http://www.jfree.org/jfreechart/)** Licenze: **[LGPL](http://www.jfree.org/lgpl.php)**
+  > - **[JFreeChart](http://www.jfree.org/jfreechart/)** Licence: **[LGPL](http://www.jfree.org/lgpl.php)**
 
 - The main program is within `Frames.java`.
 
