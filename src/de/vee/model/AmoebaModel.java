@@ -53,21 +53,7 @@ public class AmoebaModel extends Model {
 
         double[] dels = input.dels;
 
-        double[][] constraints = new double[7][2];
-        constraints[0][0] = 1e-7; //a0_min
-        constraints[0][1] = 0.25; //a0_max
-        constraints[1][0] = 1e-6; //a1_min
-        constraints[1][1] = 5e3;  //a1_max
-        constraints[2][0] = 1e-6; //a2_min
-        constraints[2][1] = 9e-1; //a2_max
-        constraints[3][0] = 0.5; //a3_min
-        constraints[3][1] = 20; //a3_max
-        constraints[4][0] = 1e-3; //percentage_min
-        constraints[4][1] = 0.3; //percentage_max
-        constraints[5][0] = 0.1; //shift_min
-        constraints[5][1] = 12; //shift_max
-        constraints[6][0] = 0.05; //p_min
-        constraints[6][1] = 3.; //p_max
+        double[][] constraints = input.getConstraints();
 
 //        constraints = null;
 

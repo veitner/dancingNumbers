@@ -1,7 +1,6 @@
 
 
-The model applied to the reported number of infections for Italy
-
+The model applied to the reported number of infections for {$region}
 
 Each frame represents a single day showing the reported numbers so far and a prediction for the next two days
 

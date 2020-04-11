@@ -52,7 +52,16 @@ public class Input implements Cloneable {
     private Color color1 = Color.GRAY;
     double ymax = 100000;
     private double[][] data = null;
-    boolean withInflectionPoint = true;
+    boolean withInflectionPoint = false;
+    private double[][] constraints = {
+            {1e-7, 0.25},//a0_min,a0_max
+            {1e-6, 5e3}, //a1_min,a1_max
+            {1e-6, 9e-1}, //a2_min,a2_max
+            {0.5, 20}, //a3_min,a3_max
+            {1e-3, 0.3}, //percentage_min,percentage_max
+            {0.1, 12},//shift_min,shift_max
+            {0.05, 3.} //p_min,p_max
+    };
 
     @Override
     protected Input clone() {
@@ -178,6 +187,17 @@ public class Input implements Cloneable {
             dels[i] = delta[i];
         }
         return this;
+    }
+
+    public Input withConstraints(double[][] constraints) {
+        if (constraints.length != this.constraints.length)
+            throw new ArrayStoreException("wrong length in 'withConstraints'!");
+        for (int i = 0; i < constraints.length - 1; i++) {
+            if (constraints[i].length < 1) continue;
+            this.constraints[i] = constraints[i];
+        }
+        return this;
+
     }
 
     public Input withInflectionPoint(boolean b) {
@@ -307,5 +327,9 @@ public class Input implements Cloneable {
 
     public String getFileName() {
         return fileName;
+    }
+
+    public double[][] getConstraints() {
+        return constraints;
     }
 }

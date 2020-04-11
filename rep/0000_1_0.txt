@@ -1,6 +1,6 @@
 
 
-Adaptation/Fitting of a logistic growth function to Covid-19 data reported by WHO
+Adaptation/Fitting of a logistic growth function to Covid-19 data reported by ECDC
 (Datasource: https://opendata.ecdc.europa.eu/covid19/casedistribution/csv)
 
 

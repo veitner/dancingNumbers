@@ -50,10 +50,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 
 import static de.vee.model.Bisection.find;
 import static de.vee.model.FunFactory.createFunction;
@@ -91,11 +88,57 @@ public class Frames {
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.ENGLISH);
+        Map<Integer, String> regions = new HashMap<>();
+        regions.put(1, "Europe");
+        regions.put(2, "Italy");
+        regions.put(3, "Spain");
+        regions.put(4, "France");
+        regions.put(5, "Germany");
+        regions.put(6, "Poland");
+        regions.put(7, "Austria");
+        regions.put(8, "Switzerland");
+        regions.put(9, "Greece");
+//        regions.put(10, "Croatia");
+        Map<Integer, double[]> delta = new HashMap<>();
+        delta.put(1, new double[]{1e-5, 0.5, 0.001, 1e-3, 1e-2, 1e-1, 1e-2});
+        delta.put(5, new double[]{0.05, 1, 0.05, 0.5, 0.02, 1, 0.2});
+        Map<Integer, double[][]> constraints = new HashMap<>();
+        constraints.put(5, new double[][]
+                {{1e-7, 0.25},//a0_min,a0_max
+                        {1e-6, 5e3}, //a1_min,a1_max
+                        {1e-6, 9e-1}, //a2_min,a2_max
+                        {0.5, 20}, //a3_min,a3_max
+                        {1e-3, 0.3}, //percentage_min,percentage_max
+                        {0.1, 14},//shift_min,shift_max
+                        {0.05, 3.} //p_min,p_max
+                });
+        Map<Integer, Boolean> inflectionPoint = new HashMap<>();
+        inflectionPoint.put(1, true);
+        inflectionPoint.put(5, true);
         try {
-            new Info(CHART_WIDTH, CHART_HEIGHT).save();
+            new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        for (Integer key : regions.keySet()) {
+            String region = regions.get(key);
+            Input input = Input.get(region, 1e6);
+            if (delta.containsKey(key)) {
+                input = input.withDelta(delta.get(key));
+            }
+            if (constraints.containsKey(key)) {
+                input = input.withConstraints(constraints.get(key));
+            }
+            if (inflectionPoint.containsKey(key)) {
+                input = input.withInflectionPoint(inflectionPoint.get(key));
+            }
+            Frames frame = new Frames(input, key);
+            frame.createFrames(360, true, false);
+        }
+
+        if (args.length < 100) return;
+
 
         Input input = Input.get("China", 1428E6)
                 .withDelta(new double[]{0.1, 0.2, 0.1, 0, 0.005, 0.1, 0.2})
@@ -119,9 +162,7 @@ public class Frames {
         frame.createFrames(360, true, false);
 
         if (args.length < 100) return;
-*/
 
-///*
         input = Input.get("Europe", 447E6)
                 .withInitial(new double[]{0.01, 2, 0.05, 1, 0.1, 4, 0.5})
                 .withDelta(new double[]{1e-5, 0.5, 0.001, 1e-3, 1e-2, 1e-1, 1e-2})
@@ -129,17 +170,14 @@ public class Frames {
                 .withInflectionPoint(false);
         frame = new Frames(input, 1);
         frame.createFrames(360, true, false);
-//*/
         //     if (args.length < 100) return;
 
-///*
         input = Input.get("Italy", 60E6)
                 .withInflectionPoint(false);
         frame = new Frames(input, 2);
         frame.createFrames(360, true, false);
 
 //        if (args.length < 100) return;
-//*/
         input = Input.get("Spain", 46.7E6)
                 .withInflectionPoint(false);
         frame = new Frames(input, 3);
@@ -151,14 +189,25 @@ public class Frames {
                 .withInflectionPoint(false);
         frame = new Frames(input, 4);
         frame.createFrames(360, true, false);
-/*
+
 //        if (args.length < 100) return;
-        input = Input.get("Germany", (long) 84E6).withDelta(new double[]{0.05, 1, 0.05, 0.5, 0.02, 1, 0.2});
+
+        input = Input.get("Germany", (long) 84E6).withDelta(new double[]{0.05, 1, 0.05, 0.5, 0.02, 1, 0.2}).withConstraints(new double[][]
+                {
+                        {1e-7, 0.25},//a0_min,a0_max
+                        {1e-6, 5e3}, //a1_min,a1_max
+                        {1e-6, 9e-1}, //a2_min,a2_max
+                        {0.5, 20}, //a3_min,a3_max
+                        {1e-3, 0.3}, //percentage_min,percentage_max
+                        {0.1, 14},//shift_min,shift_max
+                        {0.05, 3.} //p_min,p_max
+                }
+        );
+
         frame = new Frames(input, 5);
 //        frame.step(input.clone().withSuffix("1").nullifyData(), input.clone().withSuffix("2").nullifyData(), false, false); //creates an adjusted dataset
         frame.createFrames(360, true, false);
 
-*/
 //      if (args.length < 100) return;
 
         input = Input.get("Poland", 38.66E6).withInflectionPoint(false);
@@ -166,30 +215,34 @@ public class Frames {
         frame.createFrames(360, true, false);
 
 
-        input = Input.get("Austria", 38.66E6).withInflectionPoint(false);
+        input = Input.get("Austria", 8847037).withInflectionPoint(false);
         frame = new Frames(input, 8);
         frame.createFrames(360, true, false);
 
-        input = Input.get("Switzerland", 38.66E6).withInflectionPoint(false);
+        input = Input.get("Switzerland", 8516543).withInflectionPoint(false);
         frame = new Frames(input, 9);
         frame.createFrames(360, true, false);
 
-        input = Input.get("Greece", 10.7E6).withInflectionPoint(false);
+        input = Input.get("Greece", 10727668).withInflectionPoint(false);
         frame = new Frames(input, 10);
         frame.createFrames(360, true, false);
+        input = Input.get("Croatia", 4089400).withInflectionPoint(false);
+        frame = new Frames(input, 11);
+        frame.createFrames(360, true, false);
 
-        /*
-        input = Input.US();
-        m=step("0071", input, null, true, false);
-        analyse("0072", input);
-        analyseDerivative("0073_5", input, 360, false, false);
-        estimateICU("0074_5", input, 360);
-/*
-        Input input = Input.get("Greece",10.7E6);
-        m=step("N", input, null, true);
-        analyse("O", input);
-        analyseDerivative("P", input, 360, false);
+        input = Input.get("Slovenia", 2067372).withInflectionPoint(true);
+        frame = new Frames(input, 12);
+        frame.createFrames(360, true, false);
 */
+
+
+//        /*
+//        m=step("0071", input, null, true, false);
+        input = Input.get("United_States_of_America", 327.2e6).withInflectionPoint(false);
+        frame = new Frames(input, 7);
+        frame.createFrames(360, true, false);
+//*/
+
     }
 
     private boolean chartExists(String prefix, int postfix) {
@@ -424,25 +477,26 @@ public class Frames {
 
 
             double[] p = {3, 5, 8};
+            double[] days = {8, 13, 21};
 
             for (int i = 0; i < p.length; i++) {//percentage
-                for (int j = 0; j < p.length; j++) {//days
-                    /*
+                for (int j = 0; j < days.length; j++) {//days
+//                    /*
                     int k = x1.length;
                     double[] y1 = new double[k];
                     for (int q = 0; q < k; q++) {
                         int r = 0;
-                        while ((x1[q + r] - x1[q]) < p[j]) {
+                        while ((x1[q + r] - x1[q]) < days[j]) {
                             y1[q] += deaths[q + r] * ddx;
                             r++;
                             if (q + r >= k) break;
                         }
                         y1[q] *= p[i];
                     }
-                    dataset.addSeries(String.format("Assuming %d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(p[j])), createSeries(x1, y1, x1[x1.length - 1] + 1));
-                    */
-                    double[] y11 = Convolve.eval(x1, deaths, p[i], p[j], 0.5);
-                    dataset.addSeries(String.format("%d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(p[j])), createSeries(x1, y11, x1[x1.length - 1] + 1));
+                    dataset.addSeries(String.format("Assuming %d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(days[j])), createSeries(x1, y1, x1[x1.length - 1] + 1));
+//                    */
+//                    double[] y11 = Convolve.eval(x1, deaths, p[i], days[j], 0.5);
+//                    dataset.addSeries(String.format("%d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(days[j])), createSeries(x1, y11, x1[x1.length - 1] + 1));
                 }
             }
 
@@ -850,6 +904,16 @@ public class Frames {
             plot.getRangeAxis().setRange(new Range(0, ymax));
         }
         plot.getDomainAxis().setRange(new Range(0, xmax));
+
+        //remove legend for series containing max
+        LegendItemCollection legend = plot.getLegendItems();
+        Iterator iterator = legend.iterator();
+        while (iterator.hasNext()) {
+            LegendItem item = (LegendItem) iterator.next();
+            if (item.getLabel().toLowerCase().contains("maximum"))
+                iterator.remove();
+        }
+        plot.setFixedLegendItems(legend);
     }
 
     /**

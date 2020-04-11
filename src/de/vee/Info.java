@@ -29,15 +29,13 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.font.LineMetrics;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.io.*;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
@@ -140,16 +138,79 @@ public class Info {
         duplicate("0%02da4_0_0.txt", "0%02d1_0_0.txt");
     }
 
+    private static List<String> readText(File f) throws IOException {
+        List<String> text = new ArrayList<>();
+        BufferedReader br = new BufferedReader(new FileReader(f));
+        String line;
+        while ((line = br.readLine()) != null) {
+            text.add(line);
+        }
+        return text;
+    }
+
+    public static void recursiveDeleteDirectory(String directory) throws IOException {
+        File fdir = new File(directory);
+        Path path = fdir.toPath();
+        if (fdir.exists()) {
+            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    Files.delete(file);
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    Files.delete(dir);
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+        Files.createDirectories(path);
+    }
+
+    private void setupOutputDirectory() throws IOException {
+        recursiveDeleteDirectory("gr");
+        recursiveDeleteDirectory("rep1");
+        String[] template = new String[]{
+                "0000_0_0.txt",
+                "0000_1_0.txt",
+                "9999_1_0.txt",
+                "9999_2_0.txt",
+        };
+        for (String tpl : template) {
+            File fsrc = new File("rep/" + tpl);
+            File ftrg = new File("rep1/" + tpl);
+            Files.copy(fsrc.toPath(), ftrg.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private void applyTemplate(String region, int id) throws IOException {
+        String template = "000a1_0_0.tpl";
+        File ftpl = new File("rep/" + template);
+        List<String> text = readText(ftpl);
+        File ftrg = new File(String.format("rep1/0%02d1_0_0.txt", id));
+        FileWriter fw = new FileWriter(ftrg);
+        for (String line : text) {
+            if (line.contains("{$region}")) {
+                line = line.replace("{$region}", region.replaceAll("_", " "));
+            }
+            fw.write(line + "\n");
+        }
+        fw.flush();
+        fw.close();
+    }
+
     private void duplicate(String what, String test) {
-        String src = String.format(what,0);
+        String src = String.format(what, 0);
         File fsrc = new File("rep/" + src);
         for (int i = 1; i <= MAX; i++) {
-            File ftest = new File("rep/" + String.format(test, i));
+            File ftest = new File("rep1/" + String.format(test, i));
             if (!ftest.exists()) continue;
             String trg = String.format(what, i).replace("a", "");
-            File ftrg = new File("rep/"+trg);
+            File ftrg = new File("rep1/" + trg);
             try {
-                Files.copy(fsrc.toPath(),ftrg.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(fsrc.toPath(), ftrg.toPath(), StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -160,7 +221,7 @@ public class Info {
         duplicate();
         Path path = new File("gr").toPath();
         Files.createDirectories(path);
-        path = new File("rep/out").toPath();
+        path = new File("rep1/out").toPath();
         Files.createDirectories(path);
         saveTextAsPng("0000_0_0", false, false, false);
         for (int i = 0; i < MAX; i++) {
@@ -171,11 +232,11 @@ public class Info {
                     if (k == US_COMPLAINS) continue;
                     for (int l = 0; l < MAX; l++) {
                         if (l == US_COMPLAINS) continue;
-                        if ((k==0)&&(l==0)) continue; //title frame
+                        if ((k == 0) && (l == 0)) continue; //title frame
                         String base = String.format("0%d%d%d_%d_0", i, j, k, l);
-                        File f = new File("rep/" + base + ".txt");
+                        File f = new File("rep1/" + base + ".txt");
                         if (f.exists()) {
-                            saveTextAsPng(base, true, l==2, true);
+                            saveTextAsPng(base, true, l == 2, true);
                         }
                     }
                 }
@@ -188,13 +249,13 @@ public class Info {
 
     private void saveTextAsPng(String fileName, boolean center, boolean hilight, boolean smaller) throws IOException {
         List<String> text = new ArrayList<>();
-        File f = new File("rep/" + fileName + ".txt");
+        File f = new File("rep1/" + fileName + ".txt");
         BufferedReader br = new BufferedReader(new FileReader(f));
         String line;
         while ((line = br.readLine()) != null) {
             text.add(line);
         }
-        saveAsPng("rep/out/" + fileName + ".png", text, center, hilight, smaller);
+        saveAsPng("rep1/out/" + fileName + ".png", text, center, hilight, smaller);
         saveAsPng("gr/" + fileName + ".png", text, center, hilight, smaller);
     }
 
@@ -203,9 +264,23 @@ public class Info {
         this.height = height;
     }
 
+    void applyTemplatesAndSave(Map<Integer, String> regions) throws IOException {
+        setupOutputDirectory();
+        for (Integer key : regions.keySet()) {
+            String region = regions.get(key);
+            applyTemplate(region, key);
+        }
+        save();
+    }
+
     public static void main(String[] args) {
         try {
-            new Info(1280, 960).save();
+            Map<Integer, String> regions = new HashMap<>();
+            regions.put(1, "Europe");
+            regions.put(2, "Italy");
+            regions.put(3, "France");
+
+            new Info(1280, 960).applyTemplatesAndSave(regions);
         } catch (IOException e) {
             e.printStackTrace();
         }
