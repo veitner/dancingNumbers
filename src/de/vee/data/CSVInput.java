@@ -156,6 +156,13 @@ public class CSVInput {
             try {
                 c.set(year, month - 1, day, 12, 0, 0);
                 c.setTime(sdf.parse(dt));
+                if ((month >= 4) && (day >= 9)) {
+                    /*c.add(Calendar.DAY_OF_MONTH,-1);*/
+                    //they changed their reporting strategy somehow - really strange
+                    //the dataset of the 9th contains data until 8th
+                    //and the dataset of the 10th until 10th
+                    //but a dataset including data up to the 9th of april is missing
+                }
             } catch (ParseException e) {
                 return -1;
             }
