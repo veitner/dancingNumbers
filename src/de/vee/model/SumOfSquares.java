@@ -99,10 +99,10 @@ public class SumOfSquares implements RealValueFun {
                 double urf = 0.7; //relaxation factor
                 inp0 = (1. - urf) * inp0 + (urf) * inp1;
                 double d = xdata[imax - 1] - inp0 - 12.; //time diff to inflection
-                if (d > 0) { //we are close enough for reduction
-                    d = 1.e-3 / d; //1e-3: only a little "hint"
+                if (d > 1) { //we are close enough for reduction
+                    d = 1.e-3 * Math.pow(1.e1, -d);
                 } else {
-                    d = 1.e-3;
+                    d = 1.e-3; //1e-3: only a little "hint"
                 }
 //                double diff = (inp1-inp0)*d; //downscale
                 double diff = Math.abs((inp1 - inp0) / inp1) * d; //downscale
