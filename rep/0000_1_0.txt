@@ -11,6 +11,7 @@ Fit: C.F. Gauss (reprint 2018) Abhandlungen zur Methode der kleinsten Quadrate. 
 Minimization: Amoeba, Numerical Recipes (http://apps.nrbook.com/c/index.html, page 408)
 
 
+Source code available at https://github.com/veitner/dancingNumbers
 
 
 April 2020, V. Eitner
