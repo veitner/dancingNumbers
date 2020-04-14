@@ -26,8 +26,10 @@
 package de.vee.model;
 
 import com.nr.min.Amoeba;
+import datan.*;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 import static de.vee.model.Bisection.find;
 
@@ -103,6 +105,51 @@ public class AmoebaModel extends Model {
             if (opt1.funk(v1) < 1E-6) continue; //no deaths so far
 //            v1[1] = 5; //reset day of max
 
+            if (j > x.length + 1000) {
+                LogisticFunc g = new Gompertz(input.v, input.N);
+                LsqFunction f = new Convolve(this.x, g);
+                int[] selector = new int[x.length];
+                int finalJ = j;
+                Arrays.setAll(selector, k -> k > finalJ ? 0 : 1);
+                DatanVector tt = new DatanVector(x).getSubvector(selector);
+                DatanVector yy = new DatanVector(dr).getSubvector(selector);
+                double[] one = new double[tt.getNumberOfElements()];
+                Arrays.setAll(one, k -> 1.);
+                DatanVector dyy = new DatanVector(one);
+                DatanVector xx = new DatanVector(input.v).getSubvector(new int[]{0, 0, 0, 0, 1, 1, 1});
+
+
+                int[] list = {1, 1, 1};
+
+                if (tt.getNumberOfElements() > 10) {
+                    LsqMar lm = new LsqMar(tt, yy, dyy, xx, list, f);
+
+                    // write results
+                    writeLine("\n Fit to gaussian: First Approximation x = " + xx.toString());
+                    double mf = lm.getChiSquare();
+                    writeLine("Minimum function M = " + String.format(Locale.US, "%10.5f", mf));
+                    DatanVector result = lm.getResult();
+                    writeLine("Result x = " + result.toString());
+                    DatanMatrix cx = lm.getCovarianceMatrix();
+                    if (cx != null) {
+                        writeLine("CovarianceMatrix cx = ");
+                        writeLine(cx.toString());
+                    }
+                    double[] r1 = result.toArray();
+                    int k = r1.length;
+                    // asymmetric errors
+                    LsqAsm la = new LsqAsm(tt, yy, dyy, result, list, cx, mf, f);
+                    double[][] dxasy = la.getAsymmetricErrors(0.);
+                    DatanMatrix as = new DatanMatrix(dxasy);
+                    writeLine("Asymmetic errors:");
+                    writeLine(as.toString());
+//            plotDataAndFittedCurve();
+//            if (j==tt.getNumberOfElements()-1)
+//            plotParameterPlane(j, x, tt, yy, dyy, dxasy, f);
+
+                }
+
+            }
             evaluations = 100;
             while (evaluations > 2) {
                 double[] r = amoeba.minimize(v1, h = reduceBy(h, 0.95), ctrs, opt1);
@@ -153,6 +200,10 @@ public class AmoebaModel extends Model {
             e.printStackTrace();
         }*/
 
+    }
+
+    void writeLine(String text) {
+        System.out.println(text);
     }
 
     /**

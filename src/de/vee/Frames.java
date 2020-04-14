@@ -25,7 +25,10 @@
 
 package de.vee;
 
-import de.vee.model.*;
+import de.vee.model.DeathRate;
+import de.vee.model.Input;
+import de.vee.model.LogisticFunc;
+import de.vee.model.Model;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotOrientation;
@@ -54,6 +57,7 @@ import java.util.*;
 
 import static de.vee.model.Bisection.find;
 import static de.vee.model.FunFactory.createFunction;
+import static de.vee.model.ModelFactory.createModel;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class Frames {
@@ -80,7 +84,7 @@ public class Frames {
         double[][] d = input.getData();
         TODAY = d[0][d[0].length - 1] + 1;
         TODAY += 5 - (int) TODAY % 5;
-        AmoebaModel m = step(input, null, adjustY, markLast);
+        Model m = step(input, null, adjustY, markLast);
         analyse(input, m);
         analyseDerivative(input, m, Math.max(xmax, TODAY), false, markLast);
         estimateICU(input, m, Math.max(xmax, TODAY));
@@ -89,6 +93,7 @@ public class Frames {
     public static void main(String[] args) {
         Locale.setDefault(Locale.ENGLISH);
         Map<Integer, String> regions = new HashMap<>();
+//        regions.put(97, "World");
         regions.put(1, "Europe");
         regions.put(2, "Italy");
         regions.put(3, "Spain");
@@ -114,7 +119,7 @@ public class Frames {
                 });
         Map<Integer, Boolean> inflectionPoint = new HashMap<>();
         inflectionPoint.put(1, true);
-        inflectionPoint.put(5, true);
+//        inflectionPoint.put(5, true);
         try {
             new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
         } catch (IOException e) {
@@ -251,7 +256,7 @@ public class Frames {
         return false;
     }
 
-    private void analyseDerivative(Input input, AmoebaModel model, double xmax, boolean scale, boolean markLast) {
+    private void analyseDerivative(Input input, Model model, double xmax, boolean scale, boolean markLast) {
         boolean deaths = true;
         String prefix = String.format("0%02d3_5", id);
         System.out.println(input.getTitle() + ": Processing (analyseDerivative) ....");
@@ -431,7 +436,7 @@ public class Frames {
         }
     }
 
-    private void estimateICU(Input input, AmoebaModel model, double xmax) {
+    private void estimateICU(Input input, Model model, double xmax) {
         String prefix = String.format("0%02d4_5", id);
 
         System.out.println(input.getTitle() + ": Processing (estimateICU) ....");
@@ -510,7 +515,7 @@ public class Frames {
         }
     }
 
-    private void analyse(Input input, AmoebaModel model) {
+    private void analyse(Input input, Model model) {
         System.out.println(input.getTitle() + ": Processing (analyse) ....");
         String prefix = String.format("0%02d2", id);
         clearDataset();
@@ -552,6 +557,16 @@ public class Frames {
 
         plot.getRangeAxis().setRange(new Range(-1, 1));
 
+        LegendItemCollection lic = plot.getLegendItems();
+        for (int i = 0; i < lic.getItemCount(); i++) {
+            LegendItem l = lic.get(i);
+            l.setLabelPaint(Color.black);
+            l.setFillPaint(Color.black);
+            l.setShapeVisible(true);
+            l.setLineVisible(false);
+            l.setOutlinePaint(Color.black);
+        }
+
         plot.setRenderer(new Renderer_For_Analysis());
 
         for (int i = 0; i < REPEAT_FRAME; i++) {
@@ -560,7 +575,7 @@ public class Frames {
 
     }
 
-    private AmoebaModel step(Input input0, Input input1, boolean adjustY, boolean markLast) {
+    private Model step(Input input0, Input input1, boolean adjustY, boolean markLast) {
         String prefix = String.format("0%02d1_1", id);
         if (input1 != null) {
             prefix = String.format("0%02d1_0", id);
@@ -585,16 +600,16 @@ public class Frames {
                 dr1 = Arrays.copyOf(dd[2], dd[2].length);
             }
         }
-        AmoebaModel m;
+        Model m;
 
-        m = new AmoebaModel(x, y, dr, input0);
+        m = createModel(x, y, dr, input0);
         int start = m.getStart();
         double[][] a = m.getResult();
         double[][] a1 = null;
 
-        AmoebaModel m1 = null;
+        Model m1 = null;
         if (x1 != null) {
-            m1 = new AmoebaModel(x1, y1, dr1, input1);
+            m1 = createModel(x1, y1, dr1, input1);
             a1 = m1.getResult();
         }
 

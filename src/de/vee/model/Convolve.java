@@ -25,7 +25,26 @@
 
 package de.vee.model;
 
-public class Convolve {
+import datan.DatanVector;
+import datan.LsqFunction;
+
+import static de.vee.model.Bisection.find;
+
+public class Convolve implements LsqFunction {
+    private double[] x = null;
+    private LogisticFunc g = null;
+
+    public Convolve() {
+        super();
+    }
+
+    public Convolve(double[] x, LogisticFunc g) {
+        this.x = x;
+        this.g = g;
+    }
+
+
+
     private static int getBins(double[] x, double days) {
         int bins = 0;
         double x0 = x[x.length - 1];
@@ -39,11 +58,11 @@ public class Convolve {
     /**
      * Convolution to calculate death rate - look back
      *
-     * @param x x-values
-     * @param g function
+     * @param x          x-values
+     * @param g          function
      * @param percentage factor
-     * @param shift shift
-     * @param p p*shift = sigma
+     * @param shift      shift
+     * @param p          p*shift = sigma
      * @return f*g(t-days)
      */
     static double[] eval(double[] x, LogisticFunc g, double percentage, double shift, double p) {
@@ -64,14 +83,35 @@ public class Convolve {
         return y1;
     }
 
+    @Override
+    public double getValue(DatanVector d, double t) {
+        if ((x == null) || (g == null)) throw new RuntimeException("not initialized");
+        double percentage = d.getElement(0);
+        double shift = d.getElement(1);
+        double p = d.getElement(2);
+        int bins = getBins(x, shift);
+        Convolution c = new Convolution(Math.abs(p * shift), bins, shift);
+        int i = find(x, t);
+        double y1 = 0.;
+        for (int k = 0; k < bins; k++) {
+            int j = i - bins + k + 1;
+            if (j > -1) {
+                y1 += c.getBin(k - bins / 2) * g.derivative(x[j]);
+            }
+        }
+        y1 *= percentage;
+        return y1;
+    }
+
+
     /**
      * Convolution to estimate ICU - look ahead
      *
-     * @param x x-values
-     * @param y y-values
+     * @param x          x-values
+     * @param y          y-values
      * @param percentage factor
-     * @param shift shift
-     * @param p p*shift = sigma
+     * @param shift      shift
+     * @param p          p*shift = sigma
      * @return f*g(t-days)
      */
     public static double[] eval(double[] x, double[] y, double percentage, double shift, double p) {

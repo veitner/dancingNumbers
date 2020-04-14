@@ -64,7 +64,7 @@ public class CSVInput {
             "Norway",
             "Russia",
             "Ireland",
-            "Czech_Republic",
+            "Czechia",
             "Denmark",
             "Poland",
             "Romania",
@@ -192,6 +192,22 @@ public class CSVInput {
                     System.out.println(line);
                 }
             }
+            for (String key : data.keySet()) {
+                List<CSVRecord> lst = data.get(key);
+                lst.sort(Comparator.comparingLong(CSVRecord::daysSinceStart));
+                int what = lst.size() - 1;
+                CSVRecord r = lst.get(what);
+                if ((r.month >= 4) && (r.day >= 9)) {
+                    //they changed their reporting strategy somehow - really strange
+                    //the dataset of the 9th contains data until 8th
+                    //and the dataset of the 10th until 10th
+                    //but a dataset including data up to the 9th of april is missing
+                    //
+                    //looks like they are extrapolating - so remove the last entry
+                    lst.remove(what);
+                    count--;
+                }
+            }
             System.out.printf("Read %d records\n", count);
         }
     }
@@ -236,6 +252,10 @@ public class CSVInput {
         double[] y;
         double[] dr;
         if ("world".compareToIgnoreCase(key) == 0) {
+            input = input.withDelta(new double[]{0.1, 0.2, 0.1, 1e-3, 1e-2, 1e-1, 1e-2});
+//                    .withInflectionPoint(true);
+//                .withInitial(new double[]{1.E-5,17,14.E-2,14});
+
             input.setPopulationSize(0);
             HashMap<Integer, Entry> map = new HashMap<>();
             for (String id : data.keySet()) {
@@ -278,9 +298,9 @@ public class CSVInput {
             }
 
 ///* //looks also weird
-            Input china1 = Input.get("China", 1428E6) //remove china
-                    .withDelta(new double[]{0.1, 0.2, 0.1, 0})
-                    .withInitial(new double[]{1.E-5, 17, 14.E-2, 14});
+            Input china1 = Input.get("China", 1428E6); //remove china
+//                    .withDelta(new double[]{0.1, 0.2, 0.1, 0})
+//                    .withInitial(new double[]{1.E-5, 17, 14.E-2, 14});
 
             double[][] china = china1.getData();
             double[] cx = china[0];

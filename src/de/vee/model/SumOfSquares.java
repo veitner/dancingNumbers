@@ -58,6 +58,7 @@ public class SumOfSquares implements RealValueFun {
         }
     }
 
+
     public double funk(double[] z) {
         int m = 0;
         for (int i = 0; i < imax; i++) {
@@ -131,6 +132,7 @@ public class SumOfSquares implements RealValueFun {
                     n += 1;
                 }
                 //also include the cumulative curve to avoid zero percentage and/or shift to infinitive
+                if (ymax < 1.) ymax = 1.;
                 d1 = dy0[i] / ymax;
                 d2 = deaths[i] / ymax;
                 if (d2 > 0.) {

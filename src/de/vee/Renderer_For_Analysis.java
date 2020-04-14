@@ -71,5 +71,10 @@ public class Renderer_For_Analysis extends Renderer_For_Derivative {
         return Color.black;
     }
 
+    @Override
+    public Boolean getSeriesShapesFilled(int series) {
+        return true;
+    }
+
 
 }
