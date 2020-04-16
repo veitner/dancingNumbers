@@ -55,7 +55,7 @@ public class AuxDri {
                         il++;
                         double arg = Math.abs(x.getElement(i));
                         if (arg < CUT) arg = CUT;
-                        double del = DELTA;// * arg;
+                        double del = DELTA * arg;
                         double sav = x.getElement(i);
                         x.setElement(i, sav + del);
                         double fp = f.getValue(x, t.getElement(k));

@@ -26,20 +26,10 @@
 package de.vee.model;
 
 public class FunFactory {
-    public static LogisticFunc createFunction(double[] a, double N, double x0, double y0) {
+    public static LogisticFunc createFunction(double[] a, double[] slice, double N) {
 //        return new Function1(a, N, x0, y0);
-        return new Gompertz(a, N);
+//        return new Gompertz(a, N);
+        return new SuperPose(a, slice, N);
     }
 
-    public static LogisticFunc createFunction(double[] a, double N, double[] x0, double[] y0) {
-/*
-        int m = 0;
-        for (int i = 0; i < x0.length; i++) {
-            m++;
-            if (y0[i] > 0) break;
-        }
-        return new Function1(a, N, x0[m], y0[m]);
-*/
-        return new Gompertz(a, N);
-    }
 }

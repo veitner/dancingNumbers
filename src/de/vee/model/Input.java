@@ -37,6 +37,7 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class Input implements Cloneable {
+    double[] slice = null;
     private String name;
     private String title = "";
     private String suffix = "";
@@ -44,20 +45,24 @@ public class Input implements Cloneable {
     //double[] v =new double[]{1.E-5,17,14.E-2,14};
     //double[] dels = {0.1, 0.2, 0.1, 0}; //china and europe
 
-    double[] v = {0.4, 20, 0.05, 10.2, 0.15, 4, 0.5};
-    double[] dels = {0.05, 1, 0.05, 0.1, 0.02, 1, 0.1};
+    double[] v = {0.4, 20, 0.05, 10.2};
+    double[] v2 = {0.15, 4, 0.5};
+    double[] dels = {0.05, 1, 0.05, 0.1};
+    double[] dels2 = {0.02, 1, 0.1};
     double N;
     private String fileName;
     private Color color = Color.BLACK;
     private Color color1 = Color.GRAY;
-    double ymax = 100000;
+    private double ymax = 100000;
     private double[][] data = null;
     boolean withInflectionPoint = false;
     private double[][] constraints = {
             {1e-7, 0.25},//a0_min,a0_max
-            {1e-6, 5e3}, //a1_min,a1_max
+            {1e-6, 7e3}, //a1_min,a1_max
             {1e-6, 9e-1}, //a2_min,a2_max
             {0.5, 20}, //a3_min,a3_max
+    };
+    double[][] constraints2 = {
             {1e-3, 0.3}, //percentage_min,percentage_max
             {0.1, 12},//shift_min,shift_max
             {0.05, 3.} //p_min,p_max
@@ -180,11 +185,29 @@ public class Input implements Cloneable {
         return this;
     }
 
+    public Input withInitial2(double[] initial) {
+        if (initial.length != v2.length) throw new ArrayStoreException("wrong length in 'withInitial2'!");
+        for (int i = 0; i < initial.length - 1; i++) {
+            if (initial[i] < 0) continue;
+            v2[i] = initial[i];
+        }
+        return this;
+    }
+
     public Input withDelta(double[] delta) {
         if (delta.length != dels.length) throw new ArrayStoreException("wrong length in 'withDelta'!");
         for (int i = 0; i < delta.length - 1; i++) {
             if (delta[i] < 0) continue;
             dels[i] = delta[i];
+        }
+        return this;
+    }
+
+    public Input withDelta2(double[] delta) {
+        if (delta.length != dels2.length) throw new ArrayStoreException("wrong length in 'withDelta2'!");
+        for (int i = 0; i < delta.length - 1; i++) {
+            if (delta[i] < 0) continue;
+            dels2[i] = delta[i];
         }
         return this;
     }
@@ -198,6 +221,16 @@ public class Input implements Cloneable {
         }
         return this;
 
+    }
+
+    public Input withConstraints2(double[][] constraints) {
+        if (constraints.length != this.constraints2.length)
+            throw new ArrayStoreException("wrong length in 'withConstraints2'!");
+        for (int i = 0; i < constraints.length - 1; i++) {
+            if (constraints[i].length < 1) continue;
+            this.constraints2[i] = constraints[i];
+        }
+        return this;
     }
 
     public Input withInflectionPoint(boolean b) {
@@ -331,5 +364,20 @@ public class Input implements Cloneable {
 
     public double[][] getConstraints() {
         return constraints;
+    }
+
+    public Input withSlice(double[] slice) {
+        this.slice = slice;
+        return this;
+    }
+
+    public double[] getSlice(double x) {
+        int nslice = 0;
+        for (double u : slice) {
+            if (x > u) {
+                nslice++;
+            }
+        }
+        return Arrays.copyOf(slice, nslice);
     }
 }

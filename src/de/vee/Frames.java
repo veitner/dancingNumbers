@@ -94,32 +94,31 @@ public class Frames {
         Locale.setDefault(Locale.ENGLISH);
         Map<Integer, String> regions = new HashMap<>();
 //        regions.put(97, "World");
-        regions.put(1, "Europe");
+//        regions.put(1, "Europe");
         regions.put(2, "Italy");
-        regions.put(3, "Spain");
-        regions.put(4, "France");
-        regions.put(5, "Germany");
-        regions.put(6, "Poland");
-        regions.put(7, "Austria");
-        regions.put(8, "Switzerland");
-        regions.put(9, "Greece");
+//        regions.put(3, "Spain");
+//        regions.put(4, "France");
+//        regions.put(5, "Germany");
+//        regions.put(6, "Poland");
+//        regions.put(7, "Austria");
+//        regions.put(8, "Switzerland");
+//        regions.put(9, "Greece");
 //        regions.put(10, "Croatia");
         Map<Integer, double[]> delta = new HashMap<>();
-        delta.put(1, new double[]{1e-5, 0.5, 0.001, 1e-3, 1e-2, 1e-1, 1e-2});
-        delta.put(5, new double[]{0.05, 1, 0.05, 0.5, 0.02, 1, 0.2});
+        delta.put(1, new double[]{1e-5, 0.5, 0.001, 1e-3});
+        delta.put(5, new double[]{0.05, 1, 0.05, 0.5});
         Map<Integer, double[][]> constraints = new HashMap<>();
         constraints.put(5, new double[][]
                 {{1e-7, 0.25},//a0_min,a0_max
                         {1e-6, 5e3}, //a1_min,a1_max
                         {1e-6, 9e-1}, //a2_min,a2_max
                         {0.5, 20}, //a3_min,a3_max
-                        {1e-3, 0.3}, //percentage_min,percentage_max
-                        {0.1, 14},//shift_min,shift_max
-                        {0.05, 3.} //p_min,p_max
                 });
         Map<Integer, Boolean> inflectionPoint = new HashMap<>();
         inflectionPoint.put(1, true);
 //        inflectionPoint.put(5, true);
+        Map<Integer, double[]> slices = new HashMap<>();
+        slices.put(2, new double[]{62, 71, 79});
         try {
             new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
         } catch (IOException e) {
@@ -137,6 +136,9 @@ public class Frames {
             }
             if (inflectionPoint.containsKey(key)) {
                 input = input.withInflectionPoint(inflectionPoint.get(key));
+            }
+            if (slices.containsKey(key)) {
+                input = input.withSlice(slices.get(key));
             }
             Frames frame = new Frames(input, key);
             frame.createFrames(360, true, false);
@@ -273,14 +275,9 @@ public class Frames {
         double[][] a = model.getResult();
         int start = model.getStart();
         JFreeChart chart = null;
-        for (int l = Math.max(start, count - 12); l < count; l++) {
+        for (int l = Math.max(start, count - 15); l < count; l++) { //last 2 weeks only
             if (chartExists(prefix, l)) continue;
-/*
-                for (int j = 0; j < 4; j++) {
-                    v0[j] = a[l][j];
-                }
-*/
-            LogisticFunc g = createFunction(a[l], input.getPopulationSize(), x, y);
+            LogisticFunc g = createFunction(a[l], input.getSlice(x[l]), input.getPopulationSize());
             int n = (int) (xmax * 4) + 1;
             double[] dx = new double[n];
             double[] dy = new double[n];
@@ -290,13 +287,8 @@ public class Frames {
             int imax = -1;
             for (int i = 0; i < dx.length; i++) {
                 dx[i] = xd;
-                //                    if (!deaths) {
                 dy[i] = g.derivative(xd);
-//
                 xd += ddx;
-            }
-            if (deaths) {
-                //                   dy = DeathRate.getDeaths(dx, g);
             }
             for (int i = 0; i < dx.length; i++) {
                 if (dy[i] > max) {
@@ -443,7 +435,6 @@ public class Frames {
         clearDataset();
         double[][] dd = input.getData();
         double[] x = Arrays.copyOf(dd[0], dd[0].length);
-        double[] y = Arrays.copyOf(dd[1], dd[1].length);
         int count = x.length;
 
         double[][] a = model.getResult();
@@ -451,7 +442,7 @@ public class Frames {
         JFreeChart chart = null;
         for (int l = count - 1; l < count; l++) {
             if (chartExists(prefix, l)) continue;
-            LogisticFunc g = createFunction(a[l], input.getPopulationSize(), x, y);
+            LogisticFunc g = createFunction(a[l], input.getSlice(x[l]), input.getPopulationSize());
 
             int n = (int) (xmax * 4) + 1;
             double[] x1 = new double[n];
@@ -529,7 +520,9 @@ public class Frames {
         for (int l = 0; l < 3; l++) {
             double[][] d = new double[2][x.length];
             for (int j = start + 1; j < x.length; j++) {
-                double delta = (a[j][l] - a[j - 1][l]) / a[j - 1][l];
+                int k = a[j].length - 4 + l;
+                int km = a[j - 1].length - 4 + l;
+                double delta = (a[j][k] - a[j - 1][km]) / a[j - 1][km];
                 if (delta < -1) delta = -1;
                 if (delta > 1) delta = 1;
                 d[0][j] = x[j];
@@ -683,9 +676,9 @@ public class Frames {
                 }
             }
             xmaxo = (int) Math.round(xmax);
-            g = createFunction(v0, input0.getPopulationSize(), x, y);
+            g = createFunction(v0, input.getSlice(x[l]), input0.getPopulationSize());
             if (!first) {
-                g1 = createFunction(v1, input1.getPopulationSize(), x, y);
+                g1 = createFunction(v1, input.getSlice(x[l]), input1.getPopulationSize());
             }
             int num = 100000;
             if (markLast) { //begin of a new wave? //todo: calculate the distance to the model and mark
@@ -965,7 +958,7 @@ public class Frames {
             g2d.dispose();
 
         } catch (IOException ex) {
-            System.err.println(ex);
+            ex.printStackTrace();
         }
     }
 

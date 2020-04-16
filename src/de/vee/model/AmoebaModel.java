@@ -26,16 +26,13 @@
 package de.vee.model;
 
 import com.nr.min.Amoeba;
-import datan.*;
 
 import java.util.Arrays;
-import java.util.Locale;
 
 import static de.vee.model.Bisection.find;
 
 public class AmoebaModel extends Model {
     private static final int NX1 = 4;
-    private static final int NX2 = 3;
 
     public AmoebaModel(double[] x, double[] y, double[] dr, Input input) {
         super(x, y, dr, input);
@@ -47,42 +44,84 @@ public class AmoebaModel extends Model {
         if (!initialized) return null;
         Amoeba amoeba = new Amoeba(1E-6);
 
-        double[][] a = new double[x.length][input.v.length];
+        double[][] a = new double[x.length][input.v.length + input.v2.length];
 
         double[] my = new double[input.v.length];
 
-        SumOfSquares opt1 = new SumOfSquares(x, y, dr, 3, input.N, my);
+        double[][] constraints = input.getConstraints();
+
+        SumOfSquares sumOfSquares = new SumOfSquares(x, y, 3, input.N, my, constraints, null);
+        SumOfSquaresOfDeathRate sumOfSquares2 = new SumOfSquaresOfDeathRate(x, dr, 3, input.N, my, constraints, null);
 
         double[] dels = input.dels;
 
-        double[][] constraints = input.getConstraints();
-
-//        constraints = null;
-
-        opt1.v = Arrays.copyOf(input.v, input.v.length);
+        double[] v = Arrays.copyOf(input.v, input.v.length);
+        double[] v1 = Arrays.copyOf(input.v2, input.v2.length);
+        double[][] ctrs = null;
+        if (constraints != null) {
+            ctrs = Arrays.copyOf(constraints, NX1);
+        }
+        double[] slice = {};
+        double[] h0 = Arrays.copyOf(dels, NX1);
         for (int j = start; j < x.length; j++) {
-            opt1.imax = j + 1;
+            System.out.printf("Day %.0f of %.0f\n", x[j], x[x.length - 1]);
+            sumOfSquares.imax = j + 1;
+            int nslice = 0;
+            for (double u : input.slice) {
+                if (x[j] > u) {
+                    nslice++;
+                }
+            }
+            if (nslice > slice.length) {
+                slice = Arrays.copyOf(input.slice, nslice);
+                sumOfSquares.slice = slice;
+                double[] vv = new double[(nslice + 1) * 4];
+                double[] hh = new double[(nslice + 1) * 4];
+                double[][] ctrsc = new double[(nslice + 1) * 4][2];
+                System.arraycopy(v, 0, vv, 0, v.length);
+                for (int i = v.length; i < vv.length; i++) {
+                    vv[i] = v[i - v.length];
+                }
+                v = vv;
+                for (int i = 0; i <= nslice; i++) {
+                    int ii = i * 4;
+                    System.arraycopy(h0, 0, hh, ii, 4);
+                    System.arraycopy(ctrs, 0, ctrsc, ii, 4);
+                }
+                h0 = hh;
+                ctrs = ctrsc;
+                sumOfSquares.ctrs = ctrs;
+            }
+            double[] h = Arrays.copyOf(h0, h0.length);
+
+
             if (j > start + 15) { //another magic number: let stabilize the meanvalues first
-                opt1.my = my;
+                sumOfSquares.my = my;
             }
             //first look for cases
-            double[] h = Arrays.copyOf(dels, NX1);
-            double[] v = Arrays.copyOf(opt1.v, NX1);
-            double[][] ctrs = null;
-            if (constraints != null) {
-                ctrs = Arrays.copyOf(constraints, NX1);
-            }
-            opt1.considerDeathsOnly = false;
             int evaluations = 100;
             while (evaluations > 2) {
-                double[] r = amoeba.minimize(v, h = reduceBy(h, 0.97), ctrs, opt1);
-                v = amoeba.minimize(r, h = reduceBy(h, 0.97), ctrs, opt1);
+                double[] r = amoeba.minimize(v, h = reduceBy(h, 0.97), sumOfSquares);
+                double min1 = amoeba.getMin();
+                v = amoeba.minimize(r, h = reduceBy(h, 0.97), sumOfSquares);
+                double min2 = amoeba.getMin();
 //            System.out.printf("%f %f %f %f %f\n", v[0], v[1], v[2], v[3], opt1.funk(v));
                 evaluations = amoeba.getEvaluations();
+                //break off
+                if (Math.abs(min2 - min1) < 1E-9 * min2 + 1E-15) {
+                    // break;
+                }
             }
-            System.arraycopy(opt1.v, 0, a[j], 0, opt1.v.length);
+            rms = amoeba.getMin();
+            a[j] = Arrays.copyOf(v, v.length);
+//            System.arraycopy(v, 0, a[j], 0, v.length);
             if (VERBOSE) {
-                System.out.printf("%f %f %f %f %f %f %f rms=%f\n", a[j][0], a[j][1], a[j][2], a[j][3], a[j][4], a[j][5], a[j][6], rms);
+                double[] aa = a[j];
+                System.out.print("CumD:");
+                for (int i = 0; i < aa.length; i++) {
+                    System.out.printf(" %f", aa[i]);
+                }
+                System.out.printf(" rms=%f\n", rms);
             }
             if (input.withInflectionPoint) {
                 if (j - start > 3) {
@@ -92,76 +131,36 @@ public class AmoebaModel extends Model {
             }
 //            if (j < 1e9) continue;
             //and then for percentage
-            h = new double[3];
-            double[] v1 = new double[NX2];
-            System.arraycopy(dels, 4, h, 0, NX2);
-            System.arraycopy(input.v, 4, v1, 0, NX2);
-            System.arraycopy(input.v, 4, opt1.v, 4, NX2);
-            if (constraints != null) {
-                System.arraycopy(constraints, 4, ctrs, 0, NX2);
-            }
+            sumOfSquares2.f = new SuperPose(v, slice, input.N);
+            sumOfSquares2.imax = j + 1;
+            h = Arrays.copyOf(input.dels2, input.dels.length);
 
-            opt1.considerDeathsOnly = true;
-            if (opt1.funk(v1) < 1E-6) continue; //no deaths so far
+            if (sumOfSquares2.funk(v1) < 1E-6) continue; //no deaths so far
 //            v1[1] = 5; //reset day of max
 
-            if (j > x.length + 1000) {
-                LogisticFunc g = new Gompertz(input.v, input.N);
-                LsqFunction f = new Convolve(this.x, g);
-                int[] selector = new int[x.length];
-                int finalJ = j;
-                Arrays.setAll(selector, k -> k > finalJ ? 0 : 1);
-                DatanVector tt = new DatanVector(x).getSubvector(selector);
-                DatanVector yy = new DatanVector(dr).getSubvector(selector);
-                double[] one = new double[tt.getNumberOfElements()];
-                Arrays.setAll(one, k -> 1.);
-                DatanVector dyy = new DatanVector(one);
-                DatanVector xx = new DatanVector(input.v).getSubvector(new int[]{0, 0, 0, 0, 1, 1, 1});
-
-
-                int[] list = {1, 1, 1};
-
-                if (tt.getNumberOfElements() > 10) {
-                    LsqMar lm = new LsqMar(tt, yy, dyy, xx, list, f);
-
-                    // write results
-                    writeLine("\n Fit to gaussian: First Approximation x = " + xx.toString());
-                    double mf = lm.getChiSquare();
-                    writeLine("Minimum function M = " + String.format(Locale.US, "%10.5f", mf));
-                    DatanVector result = lm.getResult();
-                    writeLine("Result x = " + result.toString());
-                    DatanMatrix cx = lm.getCovarianceMatrix();
-                    if (cx != null) {
-                        writeLine("CovarianceMatrix cx = ");
-                        writeLine(cx.toString());
-                    }
-                    double[] r1 = result.toArray();
-                    int k = r1.length;
-                    // asymmetric errors
-                    LsqAsm la = new LsqAsm(tt, yy, dyy, result, list, cx, mf, f);
-                    double[][] dxasy = la.getAsymmetricErrors(0.);
-                    DatanMatrix as = new DatanMatrix(dxasy);
-                    writeLine("Asymmetic errors:");
-                    writeLine(as.toString());
-//            plotDataAndFittedCurve();
-//            if (j==tt.getNumberOfElements()-1)
-//            plotParameterPlane(j, x, tt, yy, dyy, dxasy, f);
-
-                }
-
-            }
             evaluations = 100;
-            while (evaluations > 2) {
-                double[] r = amoeba.minimize(v1, h = reduceBy(h, 0.95), ctrs, opt1);
-                v1 = amoeba.minimize(r, h = reduceBy(h, 0.95), ctrs, opt1);
+            int c = 0;
+            while ((evaluations > 2) && (c < 10)) {
+                double[] r = amoeba.minimize(v1, h = reduceBy(h, 0.95), sumOfSquares2);
+                double min1 = amoeba.getMin();
+                v1 = amoeba.minimize(r, h = reduceBy(h, 0.95), sumOfSquares2);
+                double min2 = amoeba.getMin();
 //            System.out.printf("%f %f %f %f %f\n", v[0], v[1], v[2], v[3], opt1.funk(v));
                 evaluations = amoeba.getEvaluations();
+                //break off
+                if (Math.abs(min2 - min1) < 1E-16) {
+                    c++;
+                }
             }
-            System.arraycopy(opt1.v, 0, a[j], 0, opt1.v.length);
+            double[] aa = new double[a[j].length + v1.length];
+            System.arraycopy(a[j], 0, aa, 0, a[j].length);
+            System.arraycopy(v1, 0, aa, a[j].length, v1.length);
+            a[j] = aa;
 //            System.arraycopy(v1, 0, a[j], 4, 1);
             rms = amoeba.getMin();
             if (VERBOSE) {
-                System.out.printf("%f %f %f %f %f %f %f rms=%f\n", a[j][0], a[j][1], a[j][2], a[j][3], a[j][4], a[j][5], a[j][6], rms);
+                int k = a[j].length - 1;
+                System.out.printf("NDist: %f %f %f rms=%f\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);
             }
         }
 
@@ -257,19 +256,22 @@ public class AmoebaModel extends Model {
     @Override
     public double getDeathRate(double needle) {
         int i = find(x, needle);
-        return result[i][4];
+        int k = result[i].length - 3;
+        return result[i][k];
     }
 
     @Override
     public double getShift(double needle) {
         int i = find(x, needle);
-        return result[i][5];
+        int k = result[i].length - 2;
+        return result[i][k];
     }
 
     @Override
     public double getP(double needle) {
         int i = find(x, needle);
-        return result[i][6];
+        int k = result[i].length - 1;
+        return result[i][k];
     }
 
 }

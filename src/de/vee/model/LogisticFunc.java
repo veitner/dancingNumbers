@@ -26,9 +26,9 @@
 package de.vee.model;
 
 public interface LogisticFunc {
-    double evaluate(double x);
+    double evaluate(double t);
 
-    double derivative(double x);
+    double derivative(double t);
 
     double inflectionPoint(double[] x);
 

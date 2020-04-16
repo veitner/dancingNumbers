@@ -53,14 +53,11 @@ class Gompertz implements LogisticFunc, LsqFunction {
 
     @Override
     public double getValue(DatanVector d, double t) {
+        double[] o = this.a;
         this.a = d.toArray();
-        for (int i = 0; i < a.length; i++) {
-            if (a[i] < 1E-3) return Integer.MAX_VALUE;
-            if (a[i] > 5000) return Integer.MAX_VALUE;
-        }
-        if (a[0] > 1.) return Integer.MAX_VALUE;
-        if (a[2] > 1.) return Integer.MAX_VALUE;
-        return evaluate(t);
+        double r = evaluate(t);
+        this.a = o;
+        return r;
     }
 
     @Override

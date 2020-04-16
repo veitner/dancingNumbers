@@ -27,12 +27,12 @@ package de.vee.model;
 
 import datan.*;
 import datangraphics.DatanGraphics;
+import datangraphics.GraphicsWithDataPointsAndPolyline;
 
 import java.util.Arrays;
 import java.util.Locale;
 
 import static de.vee.model.Bisection.find;
-import static de.vee.model.FunFactory.createFunction;
 
 public class LMModel extends Model {
 
@@ -54,9 +54,10 @@ public class LMModel extends Model {
         LsqFunction f = new Gompertz(input.v, input.N);
 // perform fit
         DatanVector tt = new DatanVector(this.x);
+        double[] dy = new double[this.y.length];
         DatanVector yy = new DatanVector(this.y);
         double[] deltayy = new double[tt.getNumberOfElements()];
-        Arrays.setAll(deltayy, operand -> 1.);
+        Arrays.setAll(deltayy, operand -> 1.e-2 * this.y[operand]);
         DatanVector dyy = new DatanVector(deltayy);
         int[] selector = new int[tt.getNumberOfElements()];
         Arrays.setAll(selector, operand -> operand > start ? 0 : 1);
@@ -68,112 +69,27 @@ public class LMModel extends Model {
         int[] list = new int[x.getNumberOfElements()];
         Arrays.setAll(list, operand -> operand < 3 ? 1 : 0);
         double[] deaths = dr;
-        for (int j = start; j < tt.getNumberOfElements(); j++) {
+        SumOfSquares opt1 = new SumOfSquares(this.x, this.y, 3, input.N, my, input.getConstraints(), input.slice);
+        for (int j = start; j < this.x.length; j++) {
+            opt1.imax = j + 1;
+            if (j > start + 15) { //another magic number: let stabilize the meanvalues first
+                opt1.my = my;
+            }
+
             selector[j] = 1;
-            int finalJ = j;
-            boolean considerDeathsOnly = false;
-            double N = input.N;
+/*
             LsqMar lm = new LsqMar(tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), x, list, f) {
                 @Override
                 protected double minimumFunction(DatanVector z) {
-                    double[] zz = z.toArray();
-                    double[] ydata = y;
-                    double[] xdata = LMModel.super.x;
-                    int imax = finalJ;
-                    int m = 0;
-                    for (int i = 0; i < imax; i++) {
-                        m = i;
-                        if (ydata[i] > 0) {
-                            break;
-                        }
-                    }
-                    double[] x = Arrays.copyOf(input.v, input.v.length);
-                    if (considerDeathsOnly) {
-                        System.arraycopy(zz, 0, x, 4, zz.length);
-                    } else {
-                        System.arraycopy(zz, 0, x, 0, zz.length);
-                    }
-                    LogisticFunc f = createFunction(x, N, xdata[m], ydata[m]);
-                    double sq = 0;
-                    double ymax = ydata[imax - 1];
-                    int n = 0;
-                    if (!considerDeathsOnly) {
-                        double yo = 0;
-                        double y1o = 0;
-                        for (int i = 0; i < imax; i++) {
-                            double d1 = f.evaluate(xdata[i]) / ymax;
-                            double d2 = ydata[i] / ymax;
-                            double dv = d1 - d2;
-                            sq += dv * dv; //cumulative
-                            double dr2 = d2 - yo;
-                            yo = d2;
-                            double dr1 = (d1 - y1o);
-                            y1o = d1;
-                            dv = dr1 - dr2;
-                            sq += dv * dv; //rate
-                        }
-                        n = 2 * imax;
-
-                        if (my[2] > 0) {//inflection point used for damping
-                            double inp0 = f.inflectionPoint(my);
-                            double inp1 = f.inflectionPoint(x);
-                            double urf = 0.7; //relaxation factor
-                            inp0 = (1. - urf) * inp0 + (urf) * inp1;
-                            double d = xdata[imax - 1] - inp0 - 12.; //time diff to inflection
-                            if (d > 1) { //we are close enough for reduction
-                                d = 1.e-3 * Math.pow(1.e1, -d);
-                            } else {
-                                d = 1.e-3; //1e-3: only a little "hint"
-                            }
-//                double diff = (inp1-inp0)*d; //downscale
-                            double diff = Math.abs((inp1 - inp0) / inp1) * d; //downscale
-                            double sq1 = diff * diff;
-                            sq += sq1;
-                            n += 1;
-                        }
-                    }
-                    if ((deaths != null) && (considerDeathsOnly)) {
-                        ymax = deaths[imax - 1];
-                        double[] dy = DeathRate.getRate(xdata, f, x[4], x[5], x[6]);
-                        double[] dy0 = DeathRate.getDeaths(xdata, f, x[4], x[5], x[6]);
-                        double[] dr = Arrays.copyOf(deaths, imax);
-                        double ymax1 = 0;
-                        for (int i = dr.length - 1; i > 0; i--) {
-                            dr[i] -= dr[i - 1];
-                            if (ymax1 < dr[i]) ymax1 = dr[i];
-                        }
-                        if (ymax1 < 1.) ymax1 = 1.;
-                        for (int i = 0; i < imax; i++) {
-                            double d1 = dy[i] / ymax1;
-                            double d2 = dr[i] / ymax1;
-                            if (d2 > 0.) {
-                                double v = d1 - d2;
-                                sq += v * v;
-                                n += 1;
-                            }
-                            //also include the cumulative curve to avoid zero percentage and/or shift to infinitive
-                            if (ymax < 1.) ymax = 1.;
-                            d1 = dy0[i] / ymax;
-                            d2 = deaths[i] / ymax;
-                            if (d2 > 0.) {
-                                double v = d1 - d2;
-                                sq += 1. / ymax * v * v;
-                                n += 1;
-                            }
-                        }
-                    }
-                    double[] min = {1e-4, 10, 1e-3, 1};
-                    for (int i = 0; i < zz.length; i++) {
-                        if (zz[i] < min[i]) {
-                            double d = Math.abs(zz[i] - min[i]) / min[i];
-                            sq *= d;
-                        }
-                    }
-                    return Math.sqrt(sq) / (n + 1);
-
+                    return opt1.funk(z.toArray());
                 }
             };
-            lm = new LsqMar(tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), x, list, f);
+*/
+            x.setElement(0, 1e-3);
+            x.setElement(1, 1e1);
+            x.setElement(2, 2e-3);
+            x.setElement(3, 1e0);
+            LsqMar lm = new LsqMar(tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), x, list, f);
 
 // write results
             writeLine("\n Fit: First Approximation x = " + x.toString());
@@ -198,12 +114,12 @@ public class LMModel extends Model {
                 }
             }
             // asymmetric errors
-            LsqAsm la = new LsqAsm(tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), x, list, cx, mf, f);
-            double[][] dxasy = la.getAsymmetricErrors(0.);
-            DatanMatrix as = new DatanMatrix(dxasy);
-            writeLine("Asymmetic errors:");
-            writeLine(as.toString());
-//            plotDataAndFittedCurve();
+            //   LsqAsm la = new LsqAsm(tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), x, list, cx, mf, f);
+//            double[][] dxasy = la.getAsymmetricErrors(0.);
+//            DatanMatrix as = new DatanMatrix(dxasy);
+//            writeLine("Asymmetic errors:");
+//            writeLine(as.toString());
+//            plotDataAndFittedCurve(j, x, tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), null, f);
 //            if (j==tt.getNumberOfElements()-1)
 //            plotParameterPlane(j, x, tt.getSubvector(selector), yy.getSubvector(selector), dyy.getSubvector(selector), dxasy, f);
         }
@@ -288,6 +204,36 @@ public class LMModel extends Model {
         }
         DatanGraphics.closeWorkstation();
     }
+
+    protected void plotDataAndFittedCurve(int n, DatanVector x, DatanVector t, DatanVector y, DatanVector deltay, double[][] dxasy, LsqFunction f) {
+// prepare data and fitted curve for plotting
+        int npl = 1000;
+        double[] xpl = new double[npl];
+        double[] ypl = new double[npl];
+        double[] datx = new double[n];
+        double[] daty = new double[n];
+        double[] datsx = new double[n];
+        double[] datsy = new double[n];
+        double[] datrho = new double[n];
+        for (int i = 0; i < n; i++) {
+            datx[i] = t.getElement(i);
+            daty[i] = y.getElement(i);
+            datsx[i] = 0.;
+            datsy[i] = deltay.getElement(i);
+            datrho[i] = 0.;
+        }
+        double del = (t.getElement(n - 1) - t.getElement(0) + 1.) / (double) (npl - 1);
+        for (int i = 0; i < npl; i++) {
+            xpl[i] = -.5 + t.getElement(0) + (double) i * del;
+            ypl[i] = f.getValue(x, xpl[i]);
+        }
+// produce graphics
+        String caption = "Fit to exponential";
+        double scale = .2;
+        GraphicsWithDataPointsAndPolyline gdp = new GraphicsWithDataPointsAndPolyline(getClass().getName(), "examples.E5Lsq.ps",
+                xpl, ypl, 1, scale, datx, daty, datsx, datsy, datrho, "t", "y", caption);
+    }
+
 
     private class myContourUserFunction extends DatanUserFunction {
         private final DatanVector x;

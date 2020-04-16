@@ -9,9 +9,22 @@ package datan;
 public class LsqMar {
     static double EPSILON = 1.E-8, T = 1.E-15, LAMBD = 1.E-3;
     boolean converged;
-    int n, nst, nstep, r, nred;
+    int n;
+    int nst;
+    int nstep;
+    int r;
+    protected int nred;
     int[] list, nsv;
-    DatanVector c, t, x, x1red, x2red, x1, x2, y, deltay, result;
+    DatanVector c;
+    protected DatanVector t;
+    DatanVector x;
+    DatanVector x1red;
+    DatanVector x2red;
+    DatanVector x1;
+    DatanVector x2;
+    DatanVector y;
+    DatanVector deltay;
+    DatanVector result;
     DatanMatrix a, cx;
     double[] mm;
     double lambda, m, mmin, m1, m2;  // minimum function
@@ -126,8 +139,12 @@ public class LsqMar {
         result = new DatanVector(x);
     }
 
+    protected DatanMatrix getMatrixOfDerivatives(DatanVector x) {
+        return ad.getMatrixOfDerivatives(x);
+    }
+
     private void computeMatrixAndVector(DatanVector x) {
-        a = ad.getMatrixOfDerivatives(x);
+        a = getMatrixOfDerivatives(x);
         for (int i = 0; i < n; i++) {
             for (int k = 0; k < nred; k++) {
                 a.setElement(i, k, a.getElement(i, k) / deltay.getElement(i));

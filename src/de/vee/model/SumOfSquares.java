@@ -27,27 +27,23 @@ package de.vee.model;
 
 import com.nr.RealValueFun;
 
-import java.util.Arrays;
-
-import static de.vee.model.FunFactory.createFunction;
-
 public class SumOfSquares implements RealValueFun {
-    boolean considerDeathsOnly;
-    public double[] v;
-    private double[] xdata;
-    private double[] ydata;
-    private double[] deaths;
+    double[][] ctrs;
+    double[] slice = null;
+    final double[] xdata;
+    final double[] ydata;
     double[] my;
 
     int imax;
-    private double N;
+    protected double N;
 
-    SumOfSquares(double[] xdata, double[] ydata, double[] deaths, double max, double N, double[] my) {
+    SumOfSquares(double[] xdata, double[] ydata, double max, double N, double[] my, double[][] ctrs, double[] slice) {
         this.xdata = xdata;
         this.ydata = ydata;
-        this.deaths = deaths;
         this.N = N;
         this.my = my;
+        this.ctrs = ctrs;
+        this.slice = slice;
         setMax(max);
     }
 
@@ -58,8 +54,8 @@ public class SumOfSquares implements RealValueFun {
         }
     }
 
-
-    public double funk(double[] z) {
+/*
+    public double funk(double[] z, double t) {
         int m = 0;
         for (int i = 0; i < imax; i++) {
             m = i;
@@ -73,76 +69,103 @@ public class SumOfSquares implements RealValueFun {
         } else {
             System.arraycopy(z, 0, x, 0, z.length);
         }
-        LogisticFunc f = createFunction(x, N, xdata[m], ydata[m]);
+        double penalty = 1.;
+        for (int i = 0; i < x.length; i++) {
+            if (x[i] < ctrs[i][0]) {
+                double d = Math.abs(x[i] - ctrs[i][0]);
+                penalty *= (10. + d);
+                x[i] = ctrs[i][0];
+            } else {
+                if (x[i] > ctrs[i][1]) {
+                    double d = Math.abs(x[i] - ctrs[i][1]);
+                    penalty *= (1. + d);
+                    x[i] = ctrs[i][1];
+                }
+            }
+        }
+        int i = find(xdata,t);
+        LogisticFunc f = createFunction(x, N);
         double sq = 0;
         double ymax = ydata[imax - 1];
-        int n = 0;
-        if (!considerDeathsOnly) {
-            double yo = 0;
-            double y1o = 0;
-            for (int i = 0; i < imax; i++) {
-                double d1 = f.evaluate(xdata[i]) / ymax;
-                double d2 = ydata[i] / ymax;
-                double dv = d1 - d2;
-                sq += dv * dv; //cumulative
-                double dr2 = d2 - yo;
-                yo = d2;
-                double dr1 = (d1 - y1o);
-                y1o = d1;
-                dv = dr1 - dr2;
-                sq += dv * dv; //rate
-            }
-            n = 2 * imax;
+        double y1o = 0.;
+        double yo = 0.;
+        if (i>0) {
+            y1o = f.evaluate(xdata[i - 1]) / ymax;
+            yo = ydata[i-1] / ymax;
+        }
+        double d1 = f.evaluate(xdata[i]) / ymax;
+        double d2 = ydata[i] / ymax;
+        double dv = d1 - d2;
+        sq += dv * dv; //cumulative
+        double dr2 = d2 - yo;
+        double dr1 = (d1 - y1o);
+        dv = dr1 - dr2;
+        sq += dv * dv; //rate
+        return penalty*sq;
+    }
+*/
 
-            if (my[2] > 0) {//inflection point used for damping
-                double inp0 = f.inflectionPoint(my);
-                double inp1 = f.inflectionPoint(x);
-                double urf = 0.7; //relaxation factor
-                inp0 = (1. - urf) * inp0 + (urf) * inp1;
-                double d = xdata[imax - 1] - inp0 - 12.; //time diff to inflection
-                if (d > 1) { //we are close enough for reduction
-                    d = 1.e-3 * Math.pow(1.e1, -d);
-                } else {
-                    d = 1.e-3; //1e-3: only a little "hint"
+    double getPenalty(double[] x) {
+        double penalty = 1.;
+        for (int i = 0; i < x.length; i++) {
+            if (x[i] < ctrs[i][0]) {
+                double d = Math.abs(x[i] - ctrs[i][0]);
+                penalty *= (10. + d);
+                x[i] = ctrs[i][0];
+            } else {
+                if (x[i] > ctrs[i][1]) {
+                    double d = Math.abs(x[i] - ctrs[i][1]);
+                    penalty *= (1. + d);
+                    x[i] = ctrs[i][1];
                 }
+            }
+        }
+        return penalty;
+    }
+
+    public double funk(double[] x) {
+        double penalty = getPenalty(x);
+        LogisticFunc f = new SuperPose(x, slice, N);//createFunction(x, N);
+        double sq = 0;
+        double ymax = ydata[imax - 1];
+        /*if (ymax<1.)*/
+        ymax = 1.;
+        int n = 0;
+        double yo = 0;
+        double y1o = 0;
+        for (int i = 0; i < imax; i++) {
+            double d1 = f.evaluate(xdata[i]) / ymax;
+            double d2 = ydata[i] / ymax;
+            double dv = d1 - d2;
+            sq += dv * dv; //cumulative
+            double dr2 = d2 - yo;
+            yo = d2;
+            double dr1 = (d1 - y1o);
+            y1o = d1;
+            dv = dr1 - dr2;
+            sq += dv * dv; //rate
+        }
+        n = 2 * imax;
+
+        if (my[2] > 0) {//inflection point used for damping
+            double inp0 = f.inflectionPoint(my);
+            double inp1 = f.inflectionPoint(x);
+            double urf = 0.7; //relaxation factor
+            inp0 = (1. - urf) * inp0 + (urf) * inp1;
+            double d = xdata[imax - 1] - inp0 - 12.; //time diff to inflection
+            if (d > 1) { //we are close enough for reduction
+                d = 1.e-3 * Math.pow(1.e1, -d);
+            } else {
+                d = 1.e-3; //1e-3: only a little "hint"
+            }
 //                double diff = (inp1-inp0)*d; //downscale
-                double diff = Math.abs((inp1 - inp0) / inp1) * d; //downscale
-                double sq1 = diff * diff;
-                sq += sq1;
-                n += 1;
-            }
+            double diff = Math.abs((inp1 - inp0) / inp1) * d; //downscale
+            double sq1 = diff * diff;
+            sq += sq1;
+            n += 1;
         }
-        if ((deaths != null) && (considerDeathsOnly)) {
-            ymax = deaths[imax - 1];
-            double[] dy = DeathRate.getRate(xdata, f, x[4], x[5], x[6]);
-            double[] dy0 = DeathRate.getDeaths(xdata, f, x[4], x[5], x[6]);
-            double[] dr = Arrays.copyOf(deaths, imax);
-            double ymax1 = 0;
-            for (int i = dr.length - 1; i > 0; i--) {
-                dr[i] -= dr[i - 1];
-                if (ymax1 < dr[i]) ymax1 = dr[i];
-            }
-            if (ymax1 < 1.) ymax1 = 1.;
-            for (int i = 0; i < imax; i++) {
-                double d1 = dy[i] / ymax1;
-                double d2 = dr[i] / ymax1;
-                if (d2 > 0.) {
-                    double v = d1 - d2;
-                    sq += v * v;
-                    n += 1;
-                }
-                //also include the cumulative curve to avoid zero percentage and/or shift to infinitive
-                if (ymax < 1.) ymax = 1.;
-                d1 = dy0[i] / ymax;
-                d2 = deaths[i] / ymax;
-                if (d2 > 0.) {
-                    double v = d1 - d2;
-                    sq += 1. / ymax * v * v;
-                    n += 1;
-                }
-            }
-        }
-        return Math.sqrt(sq) / (n + 1);
+        return penalty * sq;
+//        return penalty * Math.sqrt(sq) / (n + 1);
     }
 
 }
