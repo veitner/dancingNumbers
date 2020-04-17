@@ -242,7 +242,7 @@ public class CSVInput {
         if (data.size() == 0) {
             parse();
         }
-        input = new Input(key, 4E8);
+        input = new Input(key.replace("_", " "), 4E8);
         List<CSVRecord> lst;
         double[] x;
         double[] y;

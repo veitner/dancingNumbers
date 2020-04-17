@@ -96,14 +96,16 @@ public class Frames {
 //        regions.put(97, "World");
 //        regions.put(1, "Europe");
         regions.put(2, "Italy");
-//        regions.put(3, "Spain");
-//        regions.put(4, "France");
-//        regions.put(5, "Germany");
+        regions.put(3, "Spain");
+        regions.put(4, "France");
+        regions.put(5, "Germany");
 //        regions.put(6, "Poland");
 //        regions.put(7, "Austria");
 //        regions.put(8, "Switzerland");
 //        regions.put(9, "Greece");
 //        regions.put(10, "Croatia");
+        regions.put(43, "United_States_of_America");
+
         Map<Integer, double[]> delta = new HashMap<>();
         delta.put(1, new double[]{1e-5, 0.5, 0.001, 1e-3});
         delta.put(5, new double[]{0.05, 1, 0.05, 0.5});
@@ -119,6 +121,10 @@ public class Frames {
 //        inflectionPoint.put(5, true);
         Map<Integer, double[]> slices = new HashMap<>();
         slices.put(2, new double[]{62, 71, 79});
+        slices.put(3, new double[]{70, 77});
+        slices.put(4, new double[]{70, 84});
+        slices.put(5, new double[]{/*52, 60,*/ 67, 76, 84});
+        slices.put(43, new double[]{/*52, 60,*/ 76, 84});
         try {
             new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
         } catch (IOException e) {

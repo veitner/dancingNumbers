@@ -25,6 +25,8 @@
 
 package de.vee.model;
 
+import edu.princeton.cs.ErrorFunction;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -34,6 +36,7 @@ public class Convolution {
     private double[] f;
     private double variance;
     private static final double N = 3.;  //99.7 % are within -N*variance..N*variance
+    private static final double sqrt2r = 1. / Math.sqrt(2.);
 
 /*
     private double f(double t) {
@@ -83,7 +86,9 @@ public class Convolution {
     private double evaluate(double t0, double t1) {
         if (Math.abs(t0) < TINY) t0 = TINY;
         if (Math.abs(t1) < TINY) t1 = TINY;
-        return 0.5e0 * (ErrorFunction.erf(0.7071067812e0 / variance * t1) - ErrorFunction.erf(0.7071067812e0 / variance * t0));
+        //1/sqrt(2)=0.7071067812e0
+        return 0.5e0 * (ErrorFunction.erf(sqrt2r / variance * t1) - ErrorFunction.erf(sqrt2r / variance * t0));
+
     }
 
     public static void main(String[] args) {

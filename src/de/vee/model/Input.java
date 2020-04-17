@@ -37,7 +37,7 @@ import java.util.Locale;
 import java.util.StringTokenizer;
 
 public class Input implements Cloneable {
-    double[] slice = null;
+    double[] slice = {};
     private String name;
     private String title = "";
     private String suffix = "";
@@ -62,9 +62,9 @@ public class Input implements Cloneable {
             {1e-6, 9e-1}, //a2_min,a2_max
             {0.5, 20}, //a3_min,a3_max
     };
-    double[][] constraints2 = {
+    private double[][] constraints2 = {
             {1e-3, 0.3}, //percentage_min,percentage_max
-            {0.1, 12},//shift_min,shift_max
+            {0.1, 14},//shift_min,shift_max
             {0.05, 3.} //p_min,p_max
     };
 
@@ -364,6 +364,10 @@ public class Input implements Cloneable {
 
     public double[][] getConstraints() {
         return constraints;
+    }
+
+    public double[][] getConstraintsForDeathRate() {
+        return constraints2;
     }
 
     public Input withSlice(double[] slice) {

@@ -51,7 +51,7 @@ public class AmoebaModel extends Model {
         double[][] constraints = input.getConstraints();
 
         SumOfSquares sumOfSquares = new SumOfSquares(x, y, 3, input.N, my, constraints, null);
-        SumOfSquaresOfDeathRate sumOfSquares2 = new SumOfSquaresOfDeathRate(x, dr, 3, input.N, my, constraints, null);
+        SumOfSquaresOfDeathRate sumOfSquares2 = new SumOfSquaresOfDeathRate(x, dr, 3, input.N, my, input.getConstraintsForDeathRate(), null);
 
         double[] dels = input.dels;
 
@@ -113,12 +113,12 @@ public class AmoebaModel extends Model {
                 }
             }
             rms = amoeba.getMin();
-            a[j] = Arrays.copyOf(v, v.length);
+            a[j] = Arrays.copyOf(v, v.length + v1.length);
 //            System.arraycopy(v, 0, a[j], 0, v.length);
             if (VERBOSE) {
                 double[] aa = a[j];
                 System.out.print("CumD:");
-                for (int i = 0; i < aa.length; i++) {
+                for (int i = 0; i < v.length; i++) {
                     System.out.printf(" %f", aa[i]);
                 }
                 System.out.printf(" rms=%f\n", rms);
@@ -136,6 +136,7 @@ public class AmoebaModel extends Model {
             h = Arrays.copyOf(input.dels2, input.dels.length);
 
             if (sumOfSquares2.funk(v1) < 1E-6) continue; //no deaths so far
+            if (x[j] < 40) continue;
 //            v1[1] = 5; //reset day of max
 
             evaluations = 100;
@@ -152,11 +153,10 @@ public class AmoebaModel extends Model {
                     c++;
                 }
             }
-            double[] aa = new double[a[j].length + v1.length];
-            System.arraycopy(a[j], 0, aa, 0, a[j].length);
-            System.arraycopy(v1, 0, aa, a[j].length, v1.length);
-            a[j] = aa;
-//            System.arraycopy(v1, 0, a[j], 4, 1);
+//            double[] aa = new double[v.length + v1.length];
+//            System.arraycopy(a[j], 0, aa, 0, v.length);
+            System.arraycopy(v1, 0, a[j], v.length, v1.length);
+//            a[j] = aa;
             rms = amoeba.getMin();
             if (VERBOSE) {
                 int k = a[j].length - 1;
