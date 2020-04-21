@@ -102,17 +102,17 @@ public class AmoebaModel extends Model {
             int evaluations = 100;
             while (evaluations > 2) {
                 double[] r = amoeba.minimize(v, h = reduceBy(h, 0.97), sumOfSquares);
-                double min1 = amoeba.getMin();
+                double min1 = amoeba.fmin;
                 v = amoeba.minimize(r, h = reduceBy(h, 0.97), sumOfSquares);
-                double min2 = amoeba.getMin();
+                double min2 = amoeba.fmin;
 //            System.out.printf("%f %f %f %f %f\n", v[0], v[1], v[2], v[3], opt1.funk(v));
-                evaluations = amoeba.getEvaluations();
+                evaluations = amoeba.nfunc;
                 //break off
                 if (Math.abs(min2 - min1) < 1E-9 * min2 + 1E-15) {
                     // break;
                 }
             }
-            rms = amoeba.getMin();
+            rms = amoeba.fmin;
             a[j] = Arrays.copyOf(v, v.length + v1.length);
 //            System.arraycopy(v, 0, a[j], 0, v.length);
             if (VERBOSE) {
@@ -143,11 +143,11 @@ public class AmoebaModel extends Model {
             int c = 0;
             while ((evaluations > 2) && (c < 10)) {
                 double[] r = amoeba.minimize(v1, h = reduceBy(h, 0.95), sumOfSquares2);
-                double min1 = amoeba.getMin();
+                double min1 = amoeba.fmin;
                 v1 = amoeba.minimize(r, h = reduceBy(h, 0.95), sumOfSquares2);
-                double min2 = amoeba.getMin();
+                double min2 = amoeba.fmin;
 //            System.out.printf("%f %f %f %f %f\n", v[0], v[1], v[2], v[3], opt1.funk(v));
-                evaluations = amoeba.getEvaluations();
+                evaluations = amoeba.nfunc;
                 //break off
                 if (Math.abs(min2 - min1) < 1E-16) {
                     c++;
@@ -157,7 +157,7 @@ public class AmoebaModel extends Model {
 //            System.arraycopy(a[j], 0, aa, 0, v.length);
             System.arraycopy(v1, 0, a[j], v.length, v1.length);
 //            a[j] = aa;
-            rms = amoeba.getMin();
+            rms = amoeba.fmin;
             if (VERBOSE) {
                 int k = a[j].length - 1;
                 System.out.printf("NDist: %f %f %f rms=%f\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);

@@ -4,7 +4,7 @@ NRUtil.java
 RealValueFun.java
 min/Amoeba.java
 
-But a diff file for Amoeba.java is included (Amoeba.java.diff), because it was extended to respect some constraints in function amotry.
+But a diff file for Amoeba.java is included (Amoeba.java.diff), because it was modified to retrieve some intermediate results and to contract around the best solution found so far in case the maximum number of iterations is exceeded.
 
 You either need to buy the source code from "http://www.numerical.recipes/" or one of the books and key in the code
 
