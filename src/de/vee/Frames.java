@@ -56,6 +56,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static de.vee.model.Bisection.find;
+import static de.vee.model.Convolve.smooth;
 import static de.vee.model.FunFactory.createFunction;
 import static de.vee.model.ModelFactory.createModel;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -104,6 +105,7 @@ public class Frames {
 //        regions.put(8, "Switzerland");
 //        regions.put(9, "Greece");
 //        regions.put(10, "Croatia");
+//        regions.put(44, "Brazil");
         regions.put(43, "United_States_of_America");
 
         Map<Integer, double[]> delta = new HashMap<>();
@@ -120,10 +122,14 @@ public class Frames {
         inflectionPoint.put(1, true);
 //        inflectionPoint.put(5, true);
         Map<Integer, double[]> slices = new HashMap<>();
-        slices.put(2, new double[]{62, 71, 79});
+//        slices.put(2, new double[]{62, 71, 79});
+//        slices.put(2, new double[]{64, 72, 81, 89}); //lockdown on 03/21 and partial release on 04/14 (due to news, but the numbers show a change around 04/10)
+//        slices.put(2, new double[]{62, 82, 89}); //lockdown on 03/21 and partial release on 04/14 (due to news, but the numbers show a change around 04/10)
+        slices.put(2, new double[]{62, 82}); //lockdown on 03/21 and partial release on 04/14 (due to news, but the numbers show a change around 04/10)
         slices.put(3, new double[]{70, 77});
         slices.put(4, new double[]{70, 84});
         slices.put(5, new double[]{/*52, 60,*/ 67, 76, 84});
+        slices.put(9, new double[]{82});
         slices.put(43, new double[]{/*52, 60,*/ 76, 84});
         try {
             new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
@@ -154,8 +160,8 @@ public class Frames {
 
 
         Input input = Input.get("China", 1428E6)
-                .withDelta(new double[]{0.1, 0.2, 0.1, 0, 0.005, 0.1, 0.2})
-                .withInitial(new double[]{1.E-5, 17, 14.E-2, 14, 0.04, 10, 0.1})
+                .withDelta(new double[]{0.1, 0.2, 0.1, 0.005, 0.1, 0.2})
+                .withInitial(new double[]{1.E-5, 17, 14.E-2, 0.04, 10, 0.1})
                 .withFileName("china_g.dat")
                 .nullifyData();
         Frames frame = new Frames(input, 0);
@@ -281,6 +287,27 @@ public class Frames {
         double[][] a = model.getResult();
         int start = model.getStart();
         JFreeChart chart = null;
+
+        //prepare reported data
+        double[] dy1 = new double[count];
+        double[] dx1 = new double[count];
+        double[] dry1 = null;
+        dx1[0] = x[0] + 0.5;
+        dy1[0] = y[0];
+        for (int i = 1; i < dy1.length; i++) {
+            dy1[i] = Math.max(y[i] - y[i - 1], 0);
+            dx1[i] = x[i] + 0.5; //shift because of "integration"
+        }
+        if (dr != null) {
+            dry1 = new double[count];
+            dy1[0] = dr[0];
+            for (int i = 1; i < dry1.length; i++) {
+                dry1[i] = Math.max(dr[i] - dr[i - 1], 0);
+            }
+        }
+        double[][] xy1 = smooth(dx1, dy1);
+
+
         for (int l = Math.max(start, count - 15); l < count; l++) { //last 2 weeks only
             if (chartExists(prefix, l)) continue;
             LogisticFunc g = createFunction(a[l], input.getSlice(x[l]), input.getPopulationSize());
@@ -313,7 +340,6 @@ public class Frames {
             addMaximum("infections", imax, dx, dy);
 
             double[][] result = model.getResult();
-            int im = Math.min(imax, result.length) - 1;
             double deathRate;// = result[im][4];
             double shift;// = result[im][5];
             deathRate = model.getDeathRate(max);
@@ -326,6 +352,7 @@ public class Frames {
 
             addMaximum("deaths per time", -1, dx, dy1d);
 
+            dataset.addSeries("Smoothed infections per time (model)", createSeries(xy1[0], xy1[1], dx1[l]));
 
             chart = ChartFactory.createXYLineChart(
                     String.format("Rate of new infections per time for %s", input.getName()),
@@ -346,52 +373,36 @@ public class Frames {
 
             DefaultXYDataset ds = new DefaultXYDataset();
 
-            n = l + 1;
 
-            double[] dy1 = new double[n];
-            double[] dx1 = new double[n];
-
-            double[] dry1 = new double[n];
-            for (int i = 0; i < dry1.length - 1; i++) {
-                if (deaths && dr != null) {
-                    dry1[i] = Math.max(dr[i + 1] - dr[i], 0);
-                } else {
-                    dry1[i] = Math.max(y[i + 1] - y[i], 0);
-                }
-                dx1[i] = x[i] + 0.5; //shift because of "integration"
-            }
-            ds.addSeries("New deaths per time (reported)", createSeries(dx1, dry1, xmax));
-
-            for (int i = 0; i < dy1.length - 1; i++) {
-                dy1[i] = Math.max(y[i + 1] - y[i], 0);
-                dx1[i] = x[i] + 0.5; //shift because of "integration"
+            if (dry1 != null) {
+                ds.addSeries("New deaths per time (reported)", createSeries(dx1, dry1, dx1[l]));
             }
 
-            ds.addSeries("New infections per time (reported)", createSeries(dx1, dy1, xmax));
+            double[][] infections = createSeries(dx1, dy1, dx1[l]);
+            ds.addSeries("New infections per time (reported)", infections);
 
             XYBarDataset dsb = new XYBarDataset(ds, 1.);
             plot.setDataset(1, dsb);
             final XYBarRenderer renderer = new XYBarRenderer() {
+                Paint getPaint(int series) {
+                    Paint paint = Color.gray;
+                    String key = ds.getSeriesKey(series).toString().toLowerCase();
+                    if (key.contains("death")) paint = new Color(0xC080C0);
+                    return paint;
+
+                }
+
                 @Override
                 public Paint getItemPaint(int series, int column) {
                     if (markLast) {
                         if (column > 60) return Color.red;
                     }
-                    if (series < 1) {
-                        return new Color(0xC080C0);
-                    } else {
-                        return Color.gray;
-
-                    }
+                    return getPaint(series);
                 }
 
                 @Override
                 public Paint getSeriesPaint(int series) {
-                    if (series < 1) {
-                        return new Color(0xC080C0);
-                    } else {
-                        return Color.gray;
-                    }
+                    return getPaint(series);
                 }
             };
 
@@ -526,8 +537,8 @@ public class Frames {
         for (int l = 0; l < 3; l++) {
             double[][] d = new double[2][x.length];
             for (int j = start + 1; j < x.length; j++) {
-                int k = a[j].length - 4 + l;
-                int km = a[j - 1].length - 4 + l;
+                int k = Math.max(0, a[j].length - 4) + l;
+                int km = Math.max(0, a[j - 1].length - 4) + l;
                 double delta = (a[j][k] - a[j - 1][km]) / a[j - 1][km];
                 if (delta < -1) delta = -1;
                 if (delta > 1) delta = 1;
