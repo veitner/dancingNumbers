@@ -32,7 +32,7 @@ import java.util.Arrays;
 import static de.vee.model.Bisection.find;
 
 public class AmoebaModel extends Model {
-    private static final int NX1 = 4;
+    private static final int NX1 = Gompertz.DOF();
 
     public AmoebaModel(double[] x, double[] y, double[] dr, Input input) {
         super(x, y, dr, input);
@@ -68,25 +68,25 @@ public class AmoebaModel extends Model {
             sumOfSquares.imax = j + 1;
             int nslice = 0;
             for (double u : input.slice) {
-                if (x[j] > u) {
+                if (x[j] > u - 1.) {
                     nslice++;
                 }
             }
             if (nslice > slice.length) {
                 slice = Arrays.copyOf(input.slice, nslice);
                 sumOfSquares.slice = slice;
-                double[] vv = new double[(nslice + 1) * 4];
-                double[] hh = new double[(nslice + 1) * 4];
-                double[][] ctrsc = new double[(nslice + 1) * 4][2];
+                double[] vv = new double[(nslice + 1) * NX1];
+                double[] hh = new double[(nslice + 1) * NX1];
+                double[][] ctrsc = new double[(nslice + 1) * NX1][2];
                 System.arraycopy(v, 0, vv, 0, v.length);
                 for (int i = v.length; i < vv.length; i++) {
                     vv[i] = v[i - v.length];
                 }
                 v = vv;
                 for (int i = 0; i <= nslice; i++) {
-                    int ii = i * 4;
-                    System.arraycopy(h0, 0, hh, ii, 4);
-                    System.arraycopy(ctrs, 0, ctrsc, ii, 4);
+                    int ii = i * NX1;
+                    System.arraycopy(h0, 0, hh, ii, NX1);
+                    System.arraycopy(ctrs, 0, ctrsc, ii, NX1);
                 }
                 h0 = hh;
                 ctrs = ctrsc;

@@ -33,6 +33,11 @@ import java.util.Arrays;
 class Gompertz implements LogisticFunc, LsqFunction {
     private double[] a;
     private double N;
+    private static int dof = 3;
+
+    public static int DOF() {
+        return dof;
+    }
 
     Gompertz(double[] a, double N) {
         this.a = Arrays.copyOf(a, a.length);
@@ -40,7 +45,7 @@ class Gompertz implements LogisticFunc, LsqFunction {
     }
 
     public double evaluate(double x) {
-        return a[0] * N * Math.exp(-a[1] * Math.exp(-a[2] * (x + a[3])));
+        return a[0] * N * Math.exp(-a[1] * Math.exp(-a[2] * x));
     }
 
     public double derivative(double x) {
@@ -48,7 +53,7 @@ class Gompertz implements LogisticFunc, LsqFunction {
         double h = 0.5;
         double dd = evaluate(x + h) - evaluate(x - h);
 */
-        return a[0] * N * a[1] * a[2] * Math.exp(-a[2] * (x + a[3])) * Math.exp(-a[1] * Math.exp(-a[2] * (x + a[3])));
+        return a[0] * N * a[1] * a[2] * Math.exp(-a[2] * x) * Math.exp(-a[1] * Math.exp(-a[2] * x));
     }
 
     @Override
@@ -62,7 +67,7 @@ class Gompertz implements LogisticFunc, LsqFunction {
 
     @Override
     public double inflectionPoint(double[] x) {
-        return (x[2] * x[3] - Math.log(x[2])) / x[2];
+        return (x[2] - Math.log(x[2])) / x[2];
     }
 
     public double[][] getSeriesData(int maxDays) {

@@ -45,10 +45,10 @@ public class Input implements Cloneable {
     //double[] v =new double[]{1.E-5,17,14.E-2,14};
     //double[] dels = {0.1, 0.2, 0.1, 0}; //china and europe
 
-    double[] v = {0.4, 20, 0.05, 10.2};
+    double[] v = {0.4, 20, 0.05};
     double[] v2 = {0.15, 4, 0.5};
-    double[] dels = {0.05, 1, 0.05, 0.1};
-    double[] dels2 = {0.02, 1, 0.1};
+    double[] dels = {0.05, 1, 0.05};
+    double[] dels2 = {0.01, 1, 0.02};
     double N;
     private String fileName;
     private Color color = Color.BLACK;
@@ -60,7 +60,7 @@ public class Input implements Cloneable {
             {1e-7, 0.25},//a0_min,a0_max
             {1e-6, 7e3}, //a1_min,a1_max
             {1e-6, 9e-1}, //a2_min,a2_max
-            {0.5, 20}, //a3_min,a3_max
+//            {0.5, 20}, //a3_min,a3_max
     };
     private double[][] constraints2 = {
             {1e-3, 0.3}, //percentage_min,percentage_max

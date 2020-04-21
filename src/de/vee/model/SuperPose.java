@@ -50,18 +50,18 @@ public class SuperPose implements LogisticFunc {
         sl[sl.length - 1] = 1e4;
         f = new Gompertz[n];
         b = new Box[n];
-        a = new double[n][4];
+        a = new double[n][Gompertz.DOF()];
         for (int i = 0; i < n; i++) {
-            int ii = i * 4;
+            int ii = i * Gompertz.DOF();
             a[i][0] = x[ii];
             a[i][1] = x[ii + 1];
             a[i][2] = x[ii + 2];
-            a[i][3] = x[ii + 3];
+//            a[i][3] = x[ii + 3];
         }
-        if (x.length > n * 4 + 3) {
-            sigma = Math.max(1.e-3, x[n * 4]); //one sigma to blend all the elements
+        if (x.length > n * Gompertz.DOF() + 3) {
+            sigma = Math.max(1.e-3, x[n * Gompertz.DOF()]); //one sigma to blend all the elements
         } else {
-            sigma = 1.;
+            sigma = 1.;//3.5;//1.;
         }
         double a0 = -1e3;
         for (int i = 0; i < n; i++) {
