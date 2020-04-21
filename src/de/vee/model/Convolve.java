@@ -152,21 +152,16 @@ public class Convolve implements LsqFunction {
             }
             i++;
         }
-        double dd = -1;
-        i = k;
-        while ((dd < 0) && (i > 0)) {
-            dd = y1[i] - y1[i - 1];
-            i -= 1;
-        }
-        for (i = k + 1; i < k + 2 * 15; i++) {
-            y1[i] = y1[i - 1] + dd; //simply extrapolate
+
+        y1 = eval(x1, y1, 1., 7., 1., 7); //smooth twice
+//        y1 = eval(x1, y1, 1., 7., 1., 7);
+
+        double fx = 0.85;
+        for (i = k - 7; i < k + 2 * 15; i++) {
+            y1[i] = fx * y1[i - 1] + (1 - fx) * y1[i]; //simply weigh the last points
         }
         k += 1;
-        y1 = eval(x1, y1, 1., 7., 1., 7); //smooth twice
-        y1 = eval(x1, y1, 1., 7., 1., 7);
-        for (i = 0; i < k; i++) {
-            x1[i] += 7.;//3.5;
-        }
+
         double[][] result = new double[2][k];
         result[0] = Arrays.copyOf(x1, k);
         result[1] = Arrays.copyOf(y1, k);
