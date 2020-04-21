@@ -29,7 +29,7 @@ import com.nr.RealValueFun;
 
 public class SumOfSquares implements RealValueFun {
     double[][] ctrs;
-    double[] slice = null;
+    double[] slice;
     final double[] xdata;
     final double[] ydata;
     double[] my;
@@ -54,57 +54,6 @@ public class SumOfSquares implements RealValueFun {
         }
     }
 
-/*
-    public double funk(double[] z, double t) {
-        int m = 0;
-        for (int i = 0; i < imax; i++) {
-            m = i;
-            if (ydata[i] > 0) {
-                break;
-            }
-        }
-        double[] x = v;
-        if (considerDeathsOnly) {
-            System.arraycopy(z, 0, x, 4, z.length);
-        } else {
-            System.arraycopy(z, 0, x, 0, z.length);
-        }
-        double penalty = 1.;
-        for (int i = 0; i < x.length; i++) {
-            if (x[i] < ctrs[i][0]) {
-                double d = Math.abs(x[i] - ctrs[i][0]);
-                penalty *= (10. + d);
-                x[i] = ctrs[i][0];
-            } else {
-                if (x[i] > ctrs[i][1]) {
-                    double d = Math.abs(x[i] - ctrs[i][1]);
-                    penalty *= (1. + d);
-                    x[i] = ctrs[i][1];
-                }
-            }
-        }
-        int i = find(xdata,t);
-        LogisticFunc f = createFunction(x, N);
-        double sq = 0;
-        double ymax = ydata[imax - 1];
-        double y1o = 0.;
-        double yo = 0.;
-        if (i>0) {
-            y1o = f.evaluate(xdata[i - 1]) / ymax;
-            yo = ydata[i-1] / ymax;
-        }
-        double d1 = f.evaluate(xdata[i]) / ymax;
-        double d2 = ydata[i] / ymax;
-        double dv = d1 - d2;
-        sq += dv * dv; //cumulative
-        double dr2 = d2 - yo;
-        double dr1 = (d1 - y1o);
-        dv = dr1 - dr2;
-        sq += dv * dv; //rate
-        return penalty*sq;
-    }
-*/
-
     double getPenalty(double[] x) {
         double penalty = 1.;
         for (int i = 0; i < x.length; i++) {
@@ -127,15 +76,11 @@ public class SumOfSquares implements RealValueFun {
         double penalty = getPenalty(x);
         LogisticFunc f = new SuperPose(x, slice, N);//createFunction(x, N);
         double sq = 0;
-        double ymax = ydata[imax - 1];
-        /*if (ymax<1.)*/
-        ymax = 1.;
-        int n = 0;
         double yo = 0;
         double y1o = 0;
         for (int i = 0; i < imax; i++) {
-            double d1 = f.evaluate(xdata[i]) / ymax;
-            double d2 = ydata[i] / ymax;
+            double d1 = f.evaluate(xdata[i]);
+            double d2 = ydata[i];
             double dv = d1 - d2;
             sq += dv * dv; //cumulative
             double dr2 = d2 - yo;
@@ -145,7 +90,6 @@ public class SumOfSquares implements RealValueFun {
             dv = dr1 - dr2;
             sq += dv * dv; //rate
         }
-        n = 2 * imax;
 
         if (my[2] > 0) {//inflection point used for damping
             double inp0 = f.inflectionPoint(my);
@@ -162,7 +106,6 @@ public class SumOfSquares implements RealValueFun {
             double diff = Math.abs((inp1 - inp0) / inp1) * d; //downscale
             double sq1 = diff * diff;
             sq += sq1;
-            n += 1;
         }
         return penalty * sq;
 //        return penalty * Math.sqrt(sq) / (n + 1);

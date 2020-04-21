@@ -27,10 +27,7 @@ package de.vee.data;
 
 import de.vee.model.Input;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -176,8 +173,19 @@ public class CSVInput {
             int count = 0;
             while ((line = br.readLine()) != null) {
                 StringTokenizer st = new StringTokenizer(line, ", \t\n\r\f", false);
-                if (st.countTokens() == 10) {
-                    CSVRecord record = new CSVRecord(st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken(), st.nextToken());
+                if (st.countTokens() == 11) {
+                    String dateRep = st.nextToken();
+                    String day = st.nextToken();
+                    String month = st.nextToken();
+                    String year = st.nextToken();
+                    String cases = st.nextToken();
+                    String deaths = st.nextToken();
+                    String geoId = st.nextToken();
+                    String continentExp = st.nextToken();
+                    String countryterritoryCode = st.nextToken();
+                    String popData2018 = st.nextToken();
+                    String countriesAndTerritories = st.nextToken();
+                    CSVRecord record = new CSVRecord(dateRep, day, month, year, cases, deaths, countriesAndTerritories, geoId, countryterritoryCode, popData2018);
                     List<CSVRecord> lst = (data.computeIfAbsent(record.countriesAndTerritories, k -> new ArrayList<>()));
                     lst.add(record);
                     count++;
@@ -248,7 +256,7 @@ public class CSVInput {
         double[] y;
         double[] dr;
         if ("world".compareToIgnoreCase(key) == 0) {
-            input = input.withDelta(new double[]{0.1, 0.2, 0.1, 1e-3, 1e-2, 1e-1, 1e-2});
+            input = input.withDelta(new double[]{0.1, 0.2, 0.1, 1e-2, 1e-1, 1e-2});
 //                    .withInflectionPoint(true);
 //                .withInitial(new double[]{1.E-5,17,14.E-2,14});
 
@@ -433,11 +441,47 @@ public class CSVInput {
         }
 
         double[][] var = new double[3][x.length];
+/*
+        double dx = 1.;
+        double[] x1 = new double[x.length * 2];
+        double[] y1 = new double[x.length * 2];
+        double[] dr1 = new double[x.length * 2];
+        int i = 0;
+        int k = 0;
+        while (i < x.length) {
+            x1[k] = x[i];
+            y1[k] = y[i];
+            dr1[k] = dr[i];
+            if (i == x.length - 1) break;
+            while (x[i + 1] > x1[k]) {
+                k++;
+                x1[k] = x1[k - 1] + dx;
+            }
+            i++;
+        }
+        for (i = k+1; i<k+15; i++) {
+            y1[i] = y1[i-1]+(y1[k]-y1[k-1]); //simply extrapolate
+        }
+        k+=1;
+        y1 = eval(x1, y1, 1., 7., 1., 7);
+        var[0] = Arrays.copyOf(x1, k);
+        var[1] = Arrays.copyOf(y1, k);
+        var[2] = Arrays.copyOf(dr1, k);
+*/
         var[0] = x;
         var[1] = y;
         var[2] = dr;
         input.setData(var);
+        save(input.getName(), x, y);
         return input;
+    }
+
+    private void save(String name, double[] x, double[] y) throws IOException {
+        File f = new File(name.replace(" ", "_") + ".dat");
+        PrintStream pw = new PrintStream(f);
+        for (int i = 0; i < x.length; i++) {
+            pw.printf("%f %f\n", x[i], y[i]);
+        }
     }
 
     public static void main(String[] args) {
