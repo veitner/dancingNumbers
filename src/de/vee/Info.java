@@ -40,8 +40,7 @@ import java.util.Map;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 public class Info {
-    private static final int US_COMPLAINS = 7;
-    private static final int MAX = 15;
+    private static final int MAX = 9;
     private final int width;
     private final int height;
 
@@ -204,7 +203,7 @@ public class Info {
     private void duplicate(String what, String test) {
         String src = String.format(what, 0);
         File fsrc = new File("rep/" + src);
-        for (int i = 1; i <= MAX; i++) {
+        for (int i = 1; i <= 10 * MAX; i++) {
             File ftest = new File("rep1/" + String.format(test, i));
             if (!ftest.exists()) continue;
             String trg = String.format(what, i).replace("a", "");
@@ -225,13 +224,9 @@ public class Info {
         Files.createDirectories(path);
         saveTextAsPng("0000_0_0", false, false, false);
         for (int i = 0; i < MAX; i++) {
-            if (i == US_COMPLAINS) continue;
             for (int j = 0; j < MAX; j++) {
-                if (j == US_COMPLAINS) continue;
                 for (int k = 0; k < MAX; k++) {
-                    if (k == US_COMPLAINS) continue;
                     for (int l = 0; l < MAX; l++) {
-                        if (l == US_COMPLAINS) continue;
                         if ((k == 0) && (l == 0)) continue; //title frame
                         String base = String.format("0%d%d%d_%d_0", i, j, k, l);
                         File f = new File("rep1/" + base + ".txt");
