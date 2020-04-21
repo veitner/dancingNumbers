@@ -19,3 +19,9 @@ You will either need to buy these files (see subfolder `com/nr/info.txt`) or rea
 Happy coding and stay healthy
 
 April 2020, V. Eitner 
+
+\
+PS:\
+A similar approach can be viewed at <https://publichealth.gsu.edu/research/coronavirus/>.
+\
+And there is a pre print of a paper describing the fit of the Richardson-Equation online available <https://arxiv.org/pdf/2003.05681.pdf>.
