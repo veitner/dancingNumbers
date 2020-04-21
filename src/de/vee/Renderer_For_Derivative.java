@@ -37,6 +37,11 @@ public class Renderer_For_Derivative extends Renderer_For_Cumulative {
         setUseOutlinePaint(true);
     }
 
+    protected Paint getPaint(String key) {
+        Paint paint = super.getPaint(key);
+        if (key.contains("smooth")) paint = new Color(140, 202, 221);
+        return paint;
+    }
 
     @Override
     public Paint getSeriesOutlinePaint(int series) {

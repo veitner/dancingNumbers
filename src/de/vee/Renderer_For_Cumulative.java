@@ -43,7 +43,7 @@ public class Renderer_For_Cumulative extends XYLineAndShapeRenderer {
         this.dataset = dataset;
     }
 
-    private Paint getPaint(String key) {
+    protected Paint getPaint(String key) {
         Paint paint = input.getColor();
         if (key.contains("deat")) paint = new Color(0x600060);
         else if (key.contains("prev")) paint = input.getColor1();
