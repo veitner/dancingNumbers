@@ -1,5 +1,8 @@
 Meanwhile there is a paper available (fit of a richardson function to the cumulative growth):
+
 https://arxiv.org/pdf/2003.05681.pdf
 
+
 And they do something similar fitting different models to the rate of infections and deaths:
+
 https://publichealth.gsu.edu/research/coronavirus/
