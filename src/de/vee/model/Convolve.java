@@ -28,6 +28,8 @@ package de.vee.model;
 import datan.DatanVector;
 import datan.LsqFunction;
 
+import java.util.Arrays;
+
 import static de.vee.model.Bisection.find;
 
 public class Convolve implements LsqFunction {
@@ -42,7 +44,6 @@ public class Convolve implements LsqFunction {
         this.x = x;
         this.g = g;
     }
-
 
 
     private static int getBins(double[] x, double days) {
@@ -115,25 +116,61 @@ public class Convolve implements LsqFunction {
      * @return f*g(t-days)
      */
     public static double[] eval(double[] x, double[] y, double percentage, double shift, double p) {
+        return eval(x, y, percentage, shift, p, getBins(x, shift));
+    }
+
+    public static double[] eval(double[] x, double[] y, double percentage, double shift, double p, int bins) {
         int n = x.length;
         double[] y1 = new double[n];
-        int bins = getBins(x, shift);
         Convolution c = new Convolution(Math.abs(p * shift), bins, shift);
         for (int i = 0; i < n; i++) {
             y1[i] = 0.;
             for (int k = 0; k < bins; k++) {
                 int j = i + k;
-                if (j > 1 && j < n)
-                    if (y[j] < y[j - 1]) {
-                        y[j] *= 1;
-                    }
                 if (j < n) {
                     y1[i] += c.getBin(k - bins / 2) * y[j];
                 }
             }
-            y1[i] *= (percentage * shift);
+            y1[i] *= percentage;
         }
         return y1;
+    }
+
+    public static double[][] smooth(double[] x, double[] y) {
+        double dx = 1.;
+        double[] x1 = new double[x.length * 2 + 30];
+        double[] y1 = new double[x.length * 2 + 30];
+        int i = 0;
+        int k = 0;
+        while (i < x.length) {
+            x1[k] = x[i];
+            y1[k] = y[i];
+            if (i == x.length - 1) break;
+            while (x[i + 1] > x1[k]) {
+                k++;
+                x1[k] = x1[k - 1] + dx;
+            }
+            i++;
+        }
+        double dd = -1;
+        i = k;
+        while ((dd < 0) && (i > 0)) {
+            dd = y1[i] - y1[i - 1];
+            i -= 1;
+        }
+        for (i = k + 1; i < k + 2 * 15; i++) {
+            y1[i] = y1[i - 1] + dd; //simply extrapolate
+        }
+        k += 1;
+        y1 = eval(x1, y1, 1., 7., 1., 7); //smooth twice
+        y1 = eval(x1, y1, 1., 7., 1., 7);
+        for (i = 0; i < k; i++) {
+            x1[i] += 7.;//3.5;
+        }
+        double[][] result = new double[2][k];
+        result[0] = Arrays.copyOf(x1, k);
+        result[1] = Arrays.copyOf(y1, k);
+        return result;
     }
 
 }
