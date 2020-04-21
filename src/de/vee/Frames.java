@@ -96,10 +96,10 @@ public class Frames {
         Map<Integer, String> regions = new HashMap<>();
 //        regions.put(97, "World");
 //        regions.put(1, "Europe");
-        regions.put(2, "Italy");
-        regions.put(3, "Spain");
-        regions.put(4, "France");
-        regions.put(5, "Germany");
+//        regions.put(2, "Italy");
+//        regions.put(3, "Spain");
+//        regions.put(4, "France");
+//        regions.put(5, "Germany");
 //        regions.put(6, "Poland");
 //        regions.put(7, "Austria");
 //        regions.put(8, "Switzerland");

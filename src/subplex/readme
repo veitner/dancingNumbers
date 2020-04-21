@@ -1,7 +1,0 @@
-this could be a replacement for amoeba
-
-the original code is in fortran but i do not want to link a platform dependent library, therefor i started to translate from fortran to java first,
-then i thought it could be easier to translate from c to java ...
-
-anyway, this is not finished yet - the replaced goto jumps and pointer arithmetic needs to be checked
-

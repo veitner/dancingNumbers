@@ -25,14 +25,9 @@
 
 package de.vee.model;
 
-import datan.DatanVector;
-import datan.LsqFunction;
-
 import java.util.Arrays;
 
-import static de.vee.model.Bisection.find;
-
-public class Convolve implements LsqFunction {
+public class Convolve {
     private double[] x = null;
     private LogisticFunc g = null;
 
@@ -83,27 +78,6 @@ public class Convolve implements LsqFunction {
         }
         return y1;
     }
-
-    @Override
-    public double getValue(DatanVector d, double t) {
-        if ((x == null) || (g == null)) throw new RuntimeException("not initialized");
-        double percentage = d.getElement(0);
-        double shift = d.getElement(1);
-        double p = d.getElement(2);
-        int bins = getBins(x, shift);
-        Convolution c = new Convolution(Math.abs(p * shift), bins, shift);
-        int i = find(x, t);
-        double y1 = 0.;
-        for (int k = 0; k < bins; k++) {
-            int j = i - bins + k + 1;
-            if (j > -1) {
-                y1 += c.getBin(k - bins / 2) * g.derivative(x[j]);
-            }
-        }
-        y1 *= percentage;
-        return y1;
-    }
-
 
     /**
      * Convolution to estimate ICU - look ahead

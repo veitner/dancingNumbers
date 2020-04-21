@@ -25,12 +25,9 @@
 
 package de.vee.model;
 
-import datan.DatanVector;
-import datan.LsqFunction;
-
 import java.util.Arrays;
 
-class Gompertz implements LogisticFunc, LsqFunction {
+class Gompertz implements LogisticFunc {
     private double[] a;
     private double N;
     private static int dof = 3;
@@ -54,15 +51,6 @@ class Gompertz implements LogisticFunc, LsqFunction {
         double dd = evaluate(x + h) - evaluate(x - h);
 */
         return a[0] * N * a[1] * a[2] * Math.exp(-a[2] * x) * Math.exp(-a[1] * Math.exp(-a[2] * x));
-    }
-
-    @Override
-    public double getValue(DatanVector d, double t) {
-        double[] o = this.a;
-        this.a = d.toArray();
-        double r = evaluate(t);
-        this.a = o;
-        return r;
     }
 
     @Override

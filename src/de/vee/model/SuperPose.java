@@ -61,7 +61,7 @@ public class SuperPose implements LogisticFunc {
         if (x.length > n * Gompertz.DOF() + 3) {
             sigma = Math.max(1.e-3, x[n * Gompertz.DOF()]); //one sigma to blend all the elements
         } else {
-            sigma = 1.;//3.5;//1.;
+            sigma = 3.5;//1.;
         }
         double a0 = -1e3;
         for (int i = 0; i < n; i++) {
