@@ -25,8 +25,6 @@
 
 package de.vee.model;
 
-import java.util.Locale;
-
 import static edu.princeton.cs.ErrorFunction.erf;
 import static edu.princeton.cs.Gaussian.Phi;
 
@@ -50,16 +48,6 @@ public class Box {
         return Math.max(0, Phi((b - t) / sigma) - psi((a - t) / sigma));
 //        return Math.max(0, psi((b - t) / sigma) - psi((a - t) / sigma));
 //        return (psi((b - t) / sigma) - psi((a - t) / sigma));
-    }
-
-    public static void main(String[] args) {
-        Locale.setDefault(Locale.US);
-        Box b = new Box(20, 50);
-        for (int i = 0; i < 70; i++) {
-            double t = i;
-            double y = b.f(2, t);
-            System.out.printf("%f %f\n", t, y);
-        }
     }
 
 }

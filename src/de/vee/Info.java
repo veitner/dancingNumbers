@@ -33,13 +33,12 @@ import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
-public class Info {
+class Info {
     private static final int MAX = 9;
     private final int width;
     private final int height;
@@ -137,7 +136,7 @@ public class Info {
         duplicate("0%02da4_0_0.txt", "0%02d1_0_0.txt");
     }
 
-    private static List<String> readText(File f) throws IOException {
+    private List<String> readText(File f) throws IOException {
         List<String> text = new ArrayList<>();
         BufferedReader br = new BufferedReader(new FileReader(f));
         String line;
@@ -147,7 +146,7 @@ public class Info {
         return text;
     }
 
-    public static void recursiveDeleteDirectory(String directory) throws IOException {
+    public void recursiveDeleteDirectory(String directory) throws IOException {
         File fdir = new File(directory);
         Path path = fdir.toPath();
         if (fdir.exists()) {
@@ -165,7 +164,33 @@ public class Info {
                 }
             });
         }
-        Files.createDirectories(path);
+
+        try {
+            Thread.sleep(300); //wait a bit to allow the fs to finish
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            Path result = Files.createDirectories(path);
+            if (!result.toFile().exists()) {
+                try {
+                    Thread.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Files.createDirectories(path);
+            }
+        } catch (AccessDeniedException ade) {
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Files.createDirectories(path);
+
+        }
+
     }
 
     private void setupOutputDirectory() throws IOException {
@@ -266,19 +291,6 @@ public class Info {
             applyTemplate(region, key);
         }
         save();
-    }
-
-    public static void main(String[] args) {
-        try {
-            Map<Integer, String> regions = new HashMap<>();
-            regions.put(1, "Europe");
-            regions.put(2, "Italy");
-            regions.put(3, "France");
-
-            new Info(1280, 960).applyTemplatesAndSave(regions);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
 }

@@ -91,14 +91,4 @@ public class Convolution {
 
     }
 
-    public static void main(String[] args) {
-        int bins = 15;
-        Convolution c = new Convolution(6, bins, 12);
-        double s = 0;
-        for (int i = -bins / 2; i <= bins / 2; i++) {
-            s += c.getBin(i);
-        }
-        System.out.println(s);
-    }
-
 }

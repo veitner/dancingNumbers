@@ -24,4 +24,4 @@ April 2020, V. Eitner
 PS:\
 A similar approach can be viewed at <https://publichealth.gsu.edu/research/coronavirus/>.
 \
-And there is a pre print of a paper describing the fit of the Richardson-Equation online available <https://arxiv.org/pdf/2003.05681.pdf>.
+And there is a preprint of a paper describing the fit of the Richardson-Equation online available <https://arxiv.org/pdf/2003.05681.pdf>.

@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+
 public class CSVInput {
     private static final Date start;
 
@@ -44,6 +45,15 @@ public class CSVInput {
     }
 
     static final Map<String, List<CSVRecord>> data = new HashMap<>();
+
+    enum IDX {
+        DATEREP(0), DAY(1), MONTH(2), YEAR(3), CASES(4), DEATHS(5), COUNTRIESANDTERRITORIES(6), GEOID(7), COUNTRYTERRITORYCODE(8), POPDATA2018(9), CONTINENTEXP(10);
+        private final int id;
+
+        IDX(int id) {
+            this.id = id;
+        }
+    }
 
     private static final String[] europe = {
             "Italy",
@@ -168,23 +178,45 @@ public class CSVInput {
         Path src = new Downloader().get(new File("./csv/").toPath());
         if (src != null) {
             BufferedReader br = new BufferedReader(new FileReader(src.toFile()));
-            br.readLine(); //skipHeader
-            String line;
+            String line = br.readLine(); //read Header
+            List<String> header = new ArrayList<>();
+            StringTokenizer st = new StringTokenizer(line, ", \t\n\r\f", false);
+            while (st.hasMoreTokens()) {
+                header.add(st.nextToken().toLowerCase());
+            }
+            int[] idx = new int[header.size()];
+            for (int i = 0; i < header.size(); i++) {
+                idx[i] = -1;
+            }
+            for (int i = 0; i < header.size(); i++) {
+                String key = header.get(i);
+                try {
+                    IDX v = IDX.valueOf(key.toUpperCase());
+                    idx[v.id] = i;
+                } catch (IllegalArgumentException iae) {
+                    iae.printStackTrace();
+                }
+            }
+
             int count = 0;
             while ((line = br.readLine()) != null) {
-                StringTokenizer st = new StringTokenizer(line, ", \t\n\r\f", false);
+                st = new StringTokenizer(line, ", \t\n\r\f", false);
                 if (st.countTokens() == 11) {
-                    String dateRep = st.nextToken();
-                    String day = st.nextToken();
-                    String month = st.nextToken();
-                    String year = st.nextToken();
-                    String cases = st.nextToken();
-                    String deaths = st.nextToken();
-                    String geoId = st.nextToken();
-                    String continentExp = st.nextToken();
-                    String countryterritoryCode = st.nextToken();
-                    String popData2018 = st.nextToken();
-                    String countriesAndTerritories = st.nextToken();
+                    List<String> entry = new ArrayList<>();
+                    while (st.hasMoreTokens()) {
+                        entry.add(st.nextToken());
+                    }
+                    String dateRep = entry.get(idx[IDX.DATEREP.id]);
+                    String day = entry.get(idx[IDX.DAY.id]);
+                    String month = entry.get(idx[IDX.MONTH.id]);
+                    String year = entry.get(idx[IDX.YEAR.id]);
+                    String cases = entry.get(idx[IDX.CASES.id]);
+                    String deaths = entry.get(idx[IDX.DEATHS.id]);
+                    String geoId = entry.get(idx[IDX.GEOID.id]);
+//                    String continentExp = entry.get(idx[IDX.CONTINENTEXP.id]);
+                    String countryterritoryCode = entry.get(idx[IDX.COUNTRYTERRITORYCODE.id]);
+                    String popData2018 = entry.get(idx[IDX.POPDATA2018.id]);
+                    String countriesAndTerritories = entry.get(idx[IDX.COUNTRIESANDTERRITORIES.id]);
                     CSVRecord record = new CSVRecord(dateRep, day, month, year, cases, deaths, countriesAndTerritories, geoId, countryterritoryCode, popData2018);
                     List<CSVRecord> lst = (data.computeIfAbsent(record.countriesAndTerritories, k -> new ArrayList<>()));
                     lst.add(record);
@@ -484,11 +516,4 @@ public class CSVInput {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            Input input = new CSVInput().inputFor("Italy");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 }

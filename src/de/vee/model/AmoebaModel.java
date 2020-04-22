@@ -68,7 +68,7 @@ public class AmoebaModel extends Model {
             sumOfSquares.imax = j + 1;
             int nslice = 0;
             for (double u : input.slice) {
-                if (x[j] > u - 1.) {
+                if (x[j] > u - SuperPose.SIGMA * 0.5) {
                     nslice++;
                 }
             }
