@@ -193,7 +193,7 @@ class Info {
 
     }
 
-    private void setupOutputDirectory() throws IOException {
+    void setupOutputDirectory() throws IOException {
         recursiveDeleteDirectory("gr");
         recursiveDeleteDirectory("rep1");
         String[] template = new String[]{
@@ -210,6 +210,9 @@ class Info {
     }
 
     private void applyTemplate(String region, int id) throws IOException {
+        String region1 = region.replaceAll("_", " ");
+        if (region1.toLowerCase().contains("world")) region1 = "the " + region1;
+        if (region1.toLowerCase().contains("unite")) region1 = "the " + region1;
         String template = "000a1_0_0.tpl";
         File ftpl = new File("rep/" + template);
         List<String> text = readText(ftpl);
@@ -217,7 +220,7 @@ class Info {
         FileWriter fw = new FileWriter(ftrg);
         for (String line : text) {
             if (line.contains("{$region}")) {
-                line = line.replace("{$region}", region.replaceAll("_", " "));
+                line = line.replace("{$region}", region1);
             }
             fw.write(line + "\n");
         }
@@ -285,7 +288,6 @@ class Info {
     }
 
     void applyTemplatesAndSave(Map<Integer, String> regions) throws IOException {
-        setupOutputDirectory();
         for (Integer key : regions.keySet()) {
             String region = regions.get(key);
             applyTemplate(region, key);

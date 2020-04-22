@@ -74,7 +74,7 @@ class AbstractFrame {
 
 
     void createFrames() {
-        System.out.println(input.getTitle() + String.format(": Processing (%s::createFrames) ....", getClass().getName()));
+        System.out.println(input.getTitle() + String.format(": Processing (%s::createFrames) ....", getClass().getName().replace("de.vee.FrameOf", "")));
         clearDataset();
     }
 

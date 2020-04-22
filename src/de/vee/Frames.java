@@ -47,17 +47,45 @@ public class Frames extends AbstractFrame {
         rate.createFrames(Math.max(xmax, TODAY), false, markLast);
         FrameOfICU icu = new FrameOfICU(input, model, id);
         icu.createFrames(Math.max(xmax, TODAY));
+        System.out.println("\nDONE!");
+    }
+
+    public static void process(Map<Integer, String> regions, Map<Integer, double[]> delta, Map<Integer, double[][]> constraints, Map<Integer, Boolean> inflectionPoint, Map<Integer, double[]> slices) {
+        for (Integer key : regions.keySet()) {
+            String region = regions.get(key);
+            Input input = Input.get(region, 1e6);
+            if (delta.containsKey(key)) {
+                input = input.withDelta(delta.get(key));
+            }
+            if (constraints.containsKey(key)) {
+                input = input.withConstraints(constraints.get(key));
+            }
+            if (inflectionPoint.containsKey(key)) {
+                input = input.withInflectionPoint(inflectionPoint.get(key));
+            }
+            if (slices.containsKey(key)) {
+                input = input.withSlice(slices.get(key));
+            } else {
+                if (region.toLowerCase().contains("china")) {
+                    input = input.withSlice(new double[]{30, 61});
+                } else if (region.toLowerCase().contains("south_africa")) {
+                    input = input.withSlice(new double[]{72, 88});
+                }
+            }
+            Frames frame = new Frames(input, key);
+            frame.createFrames(360, true, false);
+        }
     }
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.ENGLISH);
         Map<Integer, String> regions = new HashMap<>();
-//        regions.put(97, "World");
+        regions.put(97, "World");
 //        regions.put(1, "Europe");
 //        regions.put(2, "Italy");
 //        regions.put(3, "Spain");
 //        regions.put(4, "France");
-        regions.put(5, "Germany");
+//        regions.put(5, "Germany");
 //        regions.put(6, "Poland");
 //        regions.put(7, "Austria");
 //        regions.put(8, "Switzerland");
@@ -90,31 +118,14 @@ public class Frames extends AbstractFrame {
 //        slices.put(9, new double[]{82});
 //        slices.put(43, new double[]{/*52, 60,*/ 76, 84});
         try {
-            new Info(CHART_WIDTH, CHART_HEIGHT).applyTemplatesAndSave(regions);
+            Info info = new Info(CHART_WIDTH, CHART_HEIGHT);
+            info.setupOutputDirectory();
+            info.applyTemplatesAndSave(regions);
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        for (Integer key : regions.keySet()) {
-            String region = regions.get(key);
-            Input input = Input.get(region, 1e6);
-            if (delta.containsKey(key)) {
-                input = input.withDelta(delta.get(key));
-            }
-            if (constraints.containsKey(key)) {
-                input = input.withConstraints(constraints.get(key));
-            }
-            if (inflectionPoint.containsKey(key)) {
-                input = input.withInflectionPoint(inflectionPoint.get(key));
-            }
-            if (slices.containsKey(key)) {
-                input = input.withSlice(slices.get(key));
-            }
-            Frames frame = new Frames(input, key);
-            frame.createFrames(360, true, false);
-        }
-
-        if (args.length < 100) return;
+        process(regions, delta, constraints, inflectionPoint, slices);
 
 
 /*

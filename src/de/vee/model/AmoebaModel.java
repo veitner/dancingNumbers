@@ -160,7 +160,7 @@ public class AmoebaModel extends Model {
             rms = amoeba.fmin;
             if (VERBOSE) {
                 int k = a[j].length - 1;
-                System.out.printf("NDist: %f %f %f rms=%f\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);
+                System.out.printf("Rate: %f %f %f rms=%f\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);
             }
         }
 

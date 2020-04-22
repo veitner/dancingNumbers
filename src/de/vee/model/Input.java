@@ -100,7 +100,10 @@ public class Input implements Cloneable {
     }
 
     public String getName() {
-        return name + suffix;
+        String n = name;
+        if (n.toLowerCase().contains("world")) n = "the " + n;
+        if (n.toLowerCase().contains("unite")) n = "the " + n;
+        return n + suffix;
     }
 
     public String getTitle() {

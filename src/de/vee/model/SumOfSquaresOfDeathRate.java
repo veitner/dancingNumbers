@@ -41,42 +41,30 @@ public class SumOfSquaresOfDeathRate extends SumOfSquares implements RealValueFu
         double penalty = getPenalty(x);
 
         double sq = 0;
-        double ymax = ydata[imax - 1];
-        /*if (ymax<1.)*/
-        ymax = 1.;
-        int n = 0;
 
-        ymax = ydata[imax - 1];
         double[] dy = DeathRate.getRate(xdata, f, x[0], x[1], x[2]);
         double[] dy0 = DeathRate.getDeaths(xdata, f, x[0], x[1], x[2]);
         double[] dr = Arrays.copyOf(ydata, imax);
-        double ymax1 = 0;
         for (int i = dr.length - 1; i > 0; i--) {
             dr[i] -= dr[i - 1];
-            if (ymax1 < dr[i]) ymax1 = dr[i];
         }
-        /*if (ymax1 < 1.) */
-        ymax1 = 1.;
         for (int i = 0; i < imax; i++) {
-            double d1 = dy[i] / ymax1;
-            double d2 = dr[i] / ymax1;
+            double d1 = dy[i];
+            double d2 = dr[i];
             if (d2 > 0.) {
                 double v = d1 - d2;
                 sq += v * v;
-                n += 1;
             }
-            //also include the cumulative curve to avoid zero percentage and/or shift to infinitive
-            if (ymax < 1.) ymax = 1.;
-            d1 = dy0[i] / ymax;
-            d2 = ydata[i] / ymax;
+            //also include the cumulative curve to avoid zero percentage and/or shift to infinity
+            d1 = dy0[i];
+            d2 = ydata[i];
             if (d2 > 0.) {
                 double v = d1 - d2;
-                sq += 1. / ymax * v * v;
-                n += 1;
+                sq += v * v;
             }
         }
-        return penalty * sq;
-//        return penalty * Math.sqrt(sq) / (n + 1);
+//        return penalty * sq;
+        return penalty * Math.sqrt(sq) / (2 * imax + 1);
     }
 
 }

@@ -88,7 +88,7 @@ public class SumOfSquares implements RealValueFun {
             double dr1 = (d1 - y1o);
             y1o = d1;
             dv = dr1 - dr2;
-            sq += 3. * dv * dv; //rate
+            sq += dv * dv; //rate
         }
 
         if (my[2] > 0) {//inflection point used for damping
@@ -107,8 +107,8 @@ public class SumOfSquares implements RealValueFun {
             double sq1 = diff * diff;
             sq += sq1;
         }
-        return penalty * sq;
-//        return penalty * Math.sqrt(sq) / (n + 1);
+//        return penalty * sq;
+        return penalty * Math.sqrt(sq) / (2 * imax + 1);
     }
 
 }

@@ -288,7 +288,7 @@ public class CSVInput {
         double[] y;
         double[] dr;
         if ("world".compareToIgnoreCase(key) == 0) {
-            input = input.withDelta(new double[]{0.1, 0.2, 0.1, 1e-2, 1e-1, 1e-2});
+            input = input.withDelta(new double[]{0.1, 0.2, 0.1});
 //                    .withInflectionPoint(true);
 //                .withInitial(new double[]{1.E-5,17,14.E-2,14});
 
@@ -377,6 +377,7 @@ public class CSVInput {
 
             l.clear();
         } else if ("europe".compareToIgnoreCase(key) == 0) {
+            input.withDelta(new double[]{1e-5, 0.5, 0.001});
             input.setPopulationSize(0);
             HashMap<Integer, Entry> map = new HashMap<>();
             List<String> leur = new ArrayList<>(Arrays.asList(europe));
@@ -500,6 +501,26 @@ public class CSVInput {
         var[1] = Arrays.copyOf(y1, k);
         var[2] = Arrays.copyOf(dr1, k);
 */
+
+        if (key.toLowerCase().contains("china")) {
+            //create an artifical dataset - "correct" data for china
+            int k = -1;
+            for (int i = 1; i < x.length; i++) { //find the index
+                if (y[i] - y[i - 1] > 12000) {
+                    k = i;
+                    break;
+                }
+            }
+            double b1 = (y[k + 1] - y[k]) / (x[k + 1] - x[k]);
+            double xx = y[k] + b1 * (x[k - 1] - x[k]);
+            double yy = y[k - 1];
+            double rd = (xx - yy) / yy;
+            for (int i = 0; i < k; i++) {
+                y[i] *= (1. + rd);
+            }
+        }
+
+
         var[0] = x;
         var[1] = y;
         var[2] = dr;
@@ -514,6 +535,15 @@ public class CSVInput {
         for (int i = 0; i < x.length; i++) {
             pw.printf("%f %f\n", x[i], y[i]);
         }
+    }
+
+    public List<String> getRegions() throws IOException {
+        if (data.size() == 0) {
+            parse();
+        }
+        List<String> regions = new ArrayList<>(data.keySet());
+        regions.sort(String::compareToIgnoreCase);
+        return regions;
     }
 
 }
