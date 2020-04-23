@@ -58,30 +58,53 @@ public class Downloader {
         return sdf.format(c.getTime());
     }
 
+    public static File getLastModified(String directoryFilePath) {
+        File directory = new File(directoryFilePath);
+        File[] files = directory.listFiles(File::isFile);
+        long lastModifiedTime = Long.MIN_VALUE;
+        File chosenFile = null;
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.lastModified() > lastModifiedTime) {
+                    chosenFile = file;
+                    lastModifiedTime = file.lastModified();
+                }
+            }
+        }
+
+        return chosenFile;
+    }
 
     Path get(Path downloadTo) {
         URL url;
         Path filePath = null;
-        try {
-            Files.createDirectories(downloadTo);
+        String name = "COVID-19-geographic-disbtribution-worldwide-" + getDate() + ".csv";
+        filePath = downloadTo.resolve(name);
+        File fout = filePath.toFile();
+        if (!fout.exists()) {
+            try {
+                Files.createDirectories(downloadTo);
 
-            String name = "COVID-19-geographic-disbtribution-worldwide-" + getDate() + ".csv";
-            filePath = downloadTo.resolve(name);
-            File fout = filePath.toFile();
-            if (fout.exists()) return filePath;
-            //uii :)
-            SSLUtilities.trustAllHostnames();
-            SSLUtilities.trustAllHttpsCertificates();
-            url = new URL("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv");
-            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            InputStream in = connection.getInputStream();
-            FileOutputStream out = new FileOutputStream(fout);
-            copy(in, out);
-            out.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+                //uii :)
+                SSLUtilities.trustAllHostnames();
+                SSLUtilities.trustAllHttpsCertificates();
+                url = new URL("https://opendata.ecdc.europa.eu/covid19/casedistribution/csv");
+                System.out.println("Downloading latest data from " + url.toString() + " ...");
+                HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+                connection.setRequestMethod("GET");
+                InputStream in = connection.getInputStream();
+                FileOutputStream out = new FileOutputStream(fout);
+                copy(in, out);
+                out.close();
+                System.out.println("Finished downloading!");
+            } catch (IOException e) {
+                e.printStackTrace();
+                System.out.println("Could not download data :(");
+                filePath = getLastModified(downloadTo.toAbsolutePath().toString()).toPath();
+            }
         }
+        System.out.println("Using data from " + filePath);
         return filePath;
     }
 

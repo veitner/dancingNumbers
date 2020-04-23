@@ -48,6 +48,10 @@ public abstract class Model {
         if (result == null) {
             optimize();
         }
+        if (result == null) {
+            System.out.println("Fit failed :(");
+            throw new RuntimeException("Fit failed");
+        }
         return result;
     }
 
@@ -65,7 +69,7 @@ public abstract class Model {
                     start = i;
                 }
             } else {
-                if (y[i] > 20 * y1) {
+                if ((y[i] > 20 * y1) || (i == x.length - 1)) {
                     x2 = x[i];
                     y2 = y[i];
                     break;

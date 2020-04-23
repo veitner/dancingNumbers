@@ -32,6 +32,19 @@ public class Main extends JFrame {
         constraints.insets = new Insets(2, 2, 2, 2);
         constraints.gridy = 0;
         constraints.gridx = 0;
+
+        JTextArea ta = new JTextArea();
+
+        PrintStream ps = System.out;
+        System.setOut(new PrintStream(new StreamCapturer("", new Consumer() {
+            @Override
+            public void appendText(String text) {
+                ta.append(text);
+                ta.setCaretPosition(ta.getDocument().getLength());
+            }
+        }, ps)));
+
+
         inputPanel.add(new JLabel("Select Region"), constraints);
         JComboBox<String> cb = new JComboBox<>();
         cb.addItem("World");
@@ -47,9 +60,6 @@ public class Main extends JFrame {
         }
         constraints.gridy += 1;
         inputPanel.add(cb, constraints);
-
-
-        JTextArea ta = new JTextArea();
 
         JButton buttonGo = new JButton("Go");
         buttonGo.addActionListener(new ActionListener() {
@@ -95,16 +105,8 @@ public class Main extends JFrame {
         inputPanel.add(buttonGo, constraints);
         c.add(inputPanel, NORTH);
 
-        PrintStream ps = System.out;
-        System.setOut(new PrintStream(new StreamCapturer("", new Consumer() {
-            @Override
-            public void appendText(String text) {
-                ta.append(text);
-                ta.setCaretPosition(ta.getDocument().getLength());
-            }
-        }, ps)));
-
         JScrollPane sp = new JScrollPane(ta);
+        sp.setPreferredSize(new Dimension(80, 160));
         sp.setBorder(new CompoundBorder(BorderFactory.createEmptyBorder(7, 0, 7, 0), new BevelBorder(BevelBorder.LOWERED)));
         c.add(sp, BorderLayout.CENTER);
 
@@ -168,15 +170,16 @@ public class Main extends JFrame {
 
     public static void main(String[] args) {
         Locale.setDefault(Locale.US);
+        Main m = new Main();
         try {
             new Info(Frames.CHART_WIDTH, Frames.CHART_HEIGHT).setupOutputDirectory();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Main m = new Main();
         m.setTitle("Dancing Numbers");
         m.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         m.pack();
+        m.setLocationRelativeTo(null);
         m.setVisible(true);
     }
 }

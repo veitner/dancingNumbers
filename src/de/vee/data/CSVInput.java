@@ -177,6 +177,7 @@ public class CSVInput {
     private void parse() throws IOException {
         Path src = new Downloader().get(new File("./csv/").toPath());
         if (src != null) {
+            System.out.println("Parsing data " + src.toString() + " ...");
             BufferedReader br = new BufferedReader(new FileReader(src.toFile()));
             String line = br.readLine(); //read Header
             List<String> header = new ArrayList<>();
@@ -222,12 +223,21 @@ public class CSVInput {
                     lst.add(record);
                     count++;
                 } else {
-                    System.out.println(line);
+                    System.out.println("Ignoring incomplete record: " + line);
                 }
             }
-            for (String key : data.keySet()) {
+            Set<String> keys = new HashSet<>(data.keySet());
+            for (String key : keys) {
                 List<CSVRecord> lst = data.get(key);
                 lst.sort(Comparator.comparingLong(CSVRecord::daysSinceStart));
+                long totalDeaths = 0;
+                for (CSVRecord entry : lst) {
+                    totalDeaths += entry.deaths;
+                }
+                if (totalDeaths < 1) {
+                    data.remove(key);
+                    System.out.println("Ignoring data for " + key + " (not enough records)");
+                }
 /*
 //no - I do not care about
                 int what = lst.size() - 1;
@@ -503,6 +513,8 @@ public class CSVInput {
 */
 
         if (key.toLowerCase().contains("china")) {
+            System.out.println("Modifying data because the reporting strategy has changed in between ...");
+
             //create an artifical dataset - "correct" data for china
             int k = -1;
             for (int i = 1; i < x.length; i++) { //find the index

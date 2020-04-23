@@ -131,7 +131,7 @@ public class Convolve {
 //        y1 = eval(x1, y1, 1., 7., 1., 7);
 
         double fx = 0.85;
-        for (i = k - 7; i < k + 2 * 15; i++) {
+        for (i = Math.max(0, k - 7); i < Math.min(y.length, k + 2 * 15); i++) {
             y1[i] = fx * y1[i - 1] + (1 - fx) * y1[i]; //simply weigh the last points
         }
         k += 1;

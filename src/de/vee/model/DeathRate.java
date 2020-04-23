@@ -53,7 +53,7 @@ public class DeathRate {
         double[] dy = new double[y.length];
         dy[0] = y[0];
         for (int i = 1; i < dy.length; i++) {
-            dy[i] += dy[i - 1]; //accumulate
+            dy[i] = dy[i - 1] + y[i]; //accumulate
         }
         return dy;
     }
