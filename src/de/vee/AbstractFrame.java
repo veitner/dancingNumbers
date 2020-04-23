@@ -33,7 +33,7 @@ import static de.vee.model.ModelFactory.createModel;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 class AbstractFrame {
-    final static DefaultXYDataset dataset = new DefaultXYDataset();
+    final DefaultXYDataset dataset = new DefaultXYDataset();
     final Input input;
     static double TODAY;
     static final int CHART_WIDTH = 1280;//(int) Math.round(1.8 * 640);
@@ -78,7 +78,7 @@ class AbstractFrame {
         clearDataset();
     }
 
-    static void clearDataset() {
+    void clearDataset() {
         for (int i = dataset.getSeriesCount() - 1; i >= 0; i--) {
             dataset.removeSeries(dataset.getSeriesKey(i));
         }

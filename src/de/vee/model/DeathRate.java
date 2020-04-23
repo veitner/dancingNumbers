@@ -42,7 +42,16 @@ public class DeathRate {
     }
 
     public static double[] getDeaths(double[] x, LogisticFunc f, double deathRate, double shift, double p) {
-        double[] dy = getRate(x, f, deathRate, shift, p);
+        return accumulate(getRate(x, f, deathRate, shift, p));
+    }
+
+    public static double[] getDeaths(double[] y) {
+        return accumulate(y);
+    }
+
+    public static double[] accumulate(double[] y) {
+        double[] dy = new double[y.length];
+        dy[0] = y[0];
         for (int i = 1; i < dy.length; i++) {
             dy[i] += dy[i - 1]; //accumulate
         }

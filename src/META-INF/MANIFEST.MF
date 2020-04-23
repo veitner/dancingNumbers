@@ -1,0 +1,4 @@
+Manifest-Version: 1.0
+Class-Path: nr.jar jcommon-1.0.24.jar jfreechart-1.5.0.jar
+Main-Class: de.vee.Main
+

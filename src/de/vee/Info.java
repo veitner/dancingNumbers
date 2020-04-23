@@ -37,9 +37,12 @@ import java.util.List;
 import java.util.Map;
 
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
+import static org.jfree.util.ObjectUtilities.getClassLoader;
 
 class Info {
     private static final int MAX = 9;
+    private static final String RES_FOLDER = "tpl";
+    private static final String IMAGES_FOLDER = "gr";
     private final int width;
     private final int height;
 
@@ -129,16 +132,16 @@ class Info {
         ImageIO.write(img, "png", new File(fileName));
     }
 
-    private void duplicate() {
+    private void duplicate() throws IOException {
         duplicate("0%02da2_0_0.txt", "0%02d1_0_0.txt");
         duplicate("0%02da3_2_0.txt", "0%02d1_0_0.txt");
         duplicate("0%02da3_3_0.txt", "0%02d1_0_0.txt");
         duplicate("0%02da4_0_0.txt", "0%02d1_0_0.txt");
     }
 
-    private List<String> readText(File f) throws IOException {
+    private List<String> readText(InputStream in) throws IOException {
         List<String> text = new ArrayList<>();
-        BufferedReader br = new BufferedReader(new FileReader(f));
+        BufferedReader br = new BufferedReader(new InputStreamReader(in));
         String line;
         while ((line = br.readLine()) != null) {
             text.add(line);
@@ -194,8 +197,8 @@ class Info {
     }
 
     void setupOutputDirectory() throws IOException {
-        recursiveDeleteDirectory("gr");
-        recursiveDeleteDirectory("rep1");
+        recursiveDeleteDirectory(IMAGES_FOLDER);
+        recursiveDeleteDirectory(RES_FOLDER);
         String[] template = new String[]{
                 "0000_0_0.txt",
                 "0000_1_0.txt",
@@ -203,9 +206,11 @@ class Info {
                 "9999_2_0.txt",
         };
         for (String tpl : template) {
-            File fsrc = new File("rep/" + tpl);
-            File ftrg = new File("rep1/" + tpl);
-            Files.copy(fsrc.toPath(), ftrg.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            InputStream in = getResourceAsStream(tpl);
+            List<String> lst = readText(in);
+            File ftrg = new File(RES_FOLDER + "/" + tpl);
+            ftrg.deleteOnExit();
+            storeAndReplace(lst, ftrg, "", "");
         }
     }
 
@@ -214,13 +219,18 @@ class Info {
         if (region1.toLowerCase().contains("world")) region1 = "the " + region1;
         if (region1.toLowerCase().contains("unite")) region1 = "the " + region1;
         String template = "000a1_0_0.tpl";
-        File ftpl = new File("rep/" + template);
-        List<String> text = readText(ftpl);
-        File ftrg = new File(String.format("rep1/0%02d1_0_0.txt", id));
-        FileWriter fw = new FileWriter(ftrg);
+        InputStream in = getResourceAsStream(template);
+        List<String> text = readText(in);
+        File ftrg = new File(String.format(RES_FOLDER + "/0%02d1_0_0.txt", id));
+        ftrg.deleteOnExit();
+        storeAndReplace(text, ftrg, "{$region}", region1);
+    }
+
+    private void storeAndReplace(List<String> text, File f, String needle, String replacement) throws IOException {
+        FileWriter fw = new FileWriter(f);
         for (String line : text) {
-            if (line.contains("{$region}")) {
-                line = line.replace("{$region}", region1);
+            if (line.contains(needle)) {
+                line = line.replace(needle, replacement);
             }
             fw.write(line + "\n");
         }
@@ -228,58 +238,86 @@ class Info {
         fw.close();
     }
 
-    private void duplicate(String what, String test) {
+    public InputStream getResourceAsStream(String name) {
+        name = resolveName(name);
+        ClassLoader cl = getClassLoader();
+        if (cl == null) {
+            return ClassLoader.getSystemResourceAsStream(name); // A system class.
+        }
+        return cl.getResourceAsStream(name);
+    }
+
+    private String resolveName(String name) {
+        if (name == null) {
+            return name;
+        }
+        if (!name.startsWith("/")) {
+            Class c = getClass();
+            while (c.isArray()) {
+                c = c.getComponentType();
+            }
+            String baseName = c.getName();
+            int index = baseName.lastIndexOf('.');
+            if (index != -1) {
+                name = baseName.substring(0, index).replace('.', '/') + "/" + name;
+            }
+        } else {
+            name = name.substring(1);
+        }
+        return name;
+    }
+
+    private void duplicate(String what, String test) throws IOException {
         String src = String.format(what, 0);
-        File fsrc = new File("rep/" + src);
+        InputStream in = getResourceAsStream(src);
+        List<String> text = readText(in);
         for (int i = 1; i <= 10 * MAX; i++) {
-            File ftest = new File("rep1/" + String.format(test, i));
+            File ftest = new File(RES_FOLDER + "/" + String.format(test, i));
             if (!ftest.exists()) continue;
             String trg = String.format(what, i).replace("a", "");
-            File ftrg = new File("rep1/" + trg);
+            File ftrg = new File(RES_FOLDER + "/" + trg);
+            ftrg.deleteOnExit();
             try {
-                Files.copy(fsrc.toPath(), ftrg.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                storeAndReplace(text, ftrg, "", "");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    void save() throws IOException {
+    private void save() throws IOException {
         duplicate();
-        Path path = new File("gr").toPath();
+        Path path = new File(IMAGES_FOLDER).toPath();
         Files.createDirectories(path);
-        path = new File("rep1/out").toPath();
-        Files.createDirectories(path);
-        saveTextAsPng("0000_0_0", false, false, false);
+        convertTextToPng("0000_0_0", false, false, false);
         for (int i = 0; i < MAX; i++) {
             for (int j = 0; j < MAX; j++) {
                 for (int k = 0; k < MAX; k++) {
                     for (int l = 0; l < MAX; l++) {
                         if ((k == 0) && (l == 0)) continue; //title frame
                         String base = String.format("0%d%d%d_%d_0", i, j, k, l);
-                        File f = new File("rep1/" + base + ".txt");
+                        File f = new File(RES_FOLDER + "/" + base + ".txt");
                         if (f.exists()) {
-                            saveTextAsPng(base, true, l == 2, true);
+                            convertTextToPng(base, true, l == 2, true);
                         }
                     }
                 }
             }
         }
-//        saveTextAsPng("9999_0_0", false, false);
-        saveTextAsPng("9999_1_0", false, false, false);
-        saveTextAsPng("9999_2_0", false, false, true);
+//        convertTextToPng("9999_0_0", false, false);
+        convertTextToPng("9999_1_0", false, false, false);
+        convertTextToPng("9999_2_0", false, false, true);
     }
 
-    private void saveTextAsPng(String fileName, boolean center, boolean hilight, boolean smaller) throws IOException {
+    private void convertTextToPng(String fileName, boolean center, boolean hilight, boolean smaller) throws IOException {
         List<String> text = new ArrayList<>();
-        File f = new File("rep1/" + fileName + ".txt");
+        File f = new File(RES_FOLDER + "/" + fileName + ".txt");
         BufferedReader br = new BufferedReader(new FileReader(f));
         String line;
         while ((line = br.readLine()) != null) {
             text.add(line);
         }
-        saveAsPng("rep1/out/" + fileName + ".png", text, center, hilight, smaller);
-        saveAsPng("gr/" + fileName + ".png", text, center, hilight, smaller);
+        saveAsPng(IMAGES_FOLDER + "/" + fileName + ".png", text, center, hilight, smaller);
     }
 
     Info(int width, int height) {

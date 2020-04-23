@@ -68,7 +68,7 @@ public class AmoebaModel extends Model {
             sumOfSquares.imax = j + 1;
             int nslice = 0;
             for (double u : input.slice) {
-                if (x[j] > u - SuperPose.SIGMA * 0.5) {
+                if (x[j] > u - SuperPose.SIGMA) {
                     nslice++;
                 }
             }
@@ -100,7 +100,8 @@ public class AmoebaModel extends Model {
             }
             //first look for cases
             int evaluations = 100;
-            while (evaluations > 2) {
+            int c = 0;
+            while ((evaluations > 2) && (c < 1000)) {
                 double[] r = amoeba.minimize(v, h = reduceBy(h, 0.97), sumOfSquares);
                 double min1 = amoeba.fmin;
                 v = amoeba.minimize(r, h = reduceBy(h, 0.97), sumOfSquares);
@@ -109,7 +110,7 @@ public class AmoebaModel extends Model {
                 evaluations = amoeba.nfunc;
                 //break off
                 if (Math.abs(min2 - min1) < 1E-9 * min2 + 1E-15) {
-                    // break;
+                    c++;
                 }
             }
             rms = amoeba.fmin;
@@ -140,8 +141,8 @@ public class AmoebaModel extends Model {
 //            v1[1] = 5; //reset day of max
 
             evaluations = 100;
-            int c = 0;
-            while ((evaluations > 2) && (c < 10)) {
+            c = 0;
+            while ((evaluations > 2) && (c < 25)) {
                 double[] r = amoeba.minimize(v1, h = reduceBy(h, 0.95), sumOfSquares2);
                 double min1 = amoeba.fmin;
                 v1 = amoeba.minimize(r, h = reduceBy(h, 0.95), sumOfSquares2);

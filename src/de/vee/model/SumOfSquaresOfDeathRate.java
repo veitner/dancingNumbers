@@ -43,7 +43,7 @@ public class SumOfSquaresOfDeathRate extends SumOfSquares implements RealValueFu
         double sq = 0;
 
         double[] dy = DeathRate.getRate(xdata, f, x[0], x[1], x[2]);
-        double[] dy0 = DeathRate.getDeaths(xdata, f, x[0], x[1], x[2]);
+        double[] dy0 = DeathRate.getDeaths(dy);
         double[] dr = Arrays.copyOf(ydata, imax);
         for (int i = dr.length - 1; i > 0; i--) {
             dr[i] -= dr[i - 1];

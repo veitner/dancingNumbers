@@ -119,7 +119,10 @@ public class Main extends JFrame {
         });
         buttonPanel.add(buttonCleanUp);
         JButton btnExit = new JButton("Exit");
-        btnExit.addActionListener(e -> setVisible(false));
+        btnExit.addActionListener(e -> {
+            setVisible(false);
+            System.exit(0);
+        });
         buttonPanel.add(btnExit);
 
         c.add(buttonPanel, BorderLayout.SOUTH);
