@@ -15,6 +15,7 @@ You will either need to buy these files (see subfolder `com/nr/info.txt`) or rea
 
 - To watch some results point your browser to <https://youtu.be/uk3x-sr6MQQ>
 
+- Finally a simple gui to the algorithm is available <https://github.com/veitner/dancingNumbers/releases>. 
 
 Happy coding and stay healthy
 

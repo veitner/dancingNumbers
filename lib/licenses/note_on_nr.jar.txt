@@ -1,0 +1,4 @@
+Notes on amoeba routine from Numerical recipes
+----------------------------------------------
+
+The code for the amoeba routine had been precompiled to a .class file, obfuscated using proguard version 6.2.2 and packaged into nr.jar

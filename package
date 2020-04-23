@@ -1,0 +1,14 @@
+#!/bin/bash
+mkdir -p pkg
+#assembl
+cd pkg
+cp -rf ../out/artifacts/dancingNumbers_jar/*.jar .
+cp -rf ../lib .
+mkdir -p mov
+cp -f ../mov/create2 ./mov/
+cp -f ../mov/renpos1 ./mov/
+cp -f ../LIC* .
+#
+#finally zip it
+zip -r ../DancingNumbers_1_0.zip .
+
