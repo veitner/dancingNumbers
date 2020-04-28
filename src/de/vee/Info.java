@@ -141,7 +141,7 @@ class Info {
 
     private List<String> readText(InputStream in) throws IOException {
         List<String> text = new ArrayList<>();
-        BufferedReader br = new BufferedReader(new InputStreamReader(in));
+        BufferedReader br = new BufferedReader(new InputStreamReader(in, "UTF-8"));
         String line;
         while ((line = br.readLine()) != null) {
             text.add(line);
