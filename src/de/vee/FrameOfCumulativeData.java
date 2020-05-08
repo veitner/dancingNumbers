@@ -62,9 +62,21 @@ class FrameOfCumulativeData extends AbstractFrame {
                 else if (y[l] < 100000) input.setYMax(100000.);
                 else if (y[l] < 200000) input.setYMax(200000.);
                 else if (y[l] < 500000) input.setYMax(500000.);
+                else if (y[l] < 0.2E6) input.setYMax(0.2E6);
+                else if (y[l] < 0.5E6) input.setYMax(0.5E6);
                 else if (y[l] < 1E6) input.setYMax(1E6);
+                else if (y[l] < 0.2E7) input.setYMax(0.2E7);
+                else if (y[l] < 0.5E7) input.setYMax(0.5E7);
                 else if (y[l] < 1E7) input.setYMax(1E7);
+                else if (y[l] < 0.2E8) input.setYMax(0.2E8);
+                else if (y[l] < 0.5E8) input.setYMax(0.5E8);
                 else if (y[l] < 1E8) input.setYMax(1E8);
+                else if (y[l] < 0.2E9) input.setYMax(0.2E9);
+                else if (y[l] < 0.5E9) input.setYMax(0.5E9);
+                else if (y[l] < 1E9) input.setYMax(1E9);
+                else if (y[l] < 0.2E10) input.setYMax(0.2E10);
+                else if (y[l] < 0.5E10) input.setYMax(0.5E10);
+                else if (y[l] < 1E10) input.setYMax(1E10);
             }
             if (g != null) {
                 xmaxo += 1;

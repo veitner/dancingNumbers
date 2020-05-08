@@ -32,12 +32,12 @@ public class GompertzEx extends Gompertz {
     }
 
     public static double[][] getConstraints() {
-        double min = 3;
-        double max = 7;
+        double min = 1;
+        double max = 10;
         return new double[][]{
                 {min, max},//a0_min,a0_max
-                {min / 50., max / 10.}, //a1_min,a1_max
-                {min / 500., max / 100.}, //a2_min,a2_max
+                {min / 1000., max}, //a1_min,a1_max
+                {min / 500., max / 50.}, //a2_min,a2_max
         };
     }
 
