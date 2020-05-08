@@ -16,17 +16,21 @@ import org.jfree.data.xy.XYBarDataset;
 
 import java.awt.*;
 
-import static de.vee.model.Convolve.smooth;
 import static de.vee.model.FunFactory.createFunction;
 
 public class FrameOfRate extends AbstractFrame {
+    private double xmax;
+    private boolean scale;
+    private boolean markLast;
 
-    FrameOfRate(Input input, Model m, int id) {
+    FrameOfRate(Input input, Model m, int id, double xmax, boolean scale, boolean markLast) {
         super(input, m, id);
+        this.xmax = xmax;
+        this.scale = scale;
+        this.markLast = markLast;
     }
 
-    void createFrames(double xmax, boolean scale, boolean markLast) {
-        super.createFrames();
+    void doCreateFrames() {
         String prefix = String.format("0%02d3_5", id);
 
         int count = x.length;
@@ -52,7 +56,7 @@ public class FrameOfRate extends AbstractFrame {
                 dry1[i] = Math.max(dr[i] - dr[i - 1], 0);
             }
         }
-        double[][] xy1 = smooth(dx1, dy1);
+//        double[][] xy1 = smooth(dx1, dy1);
 
 
         for (int l = Math.max(start, count - 15); l < count; l++) { //last 2 weeks only
@@ -82,9 +86,11 @@ public class FrameOfRate extends AbstractFrame {
                 }
             }
 
+            DefaultXYDataset dataset = new DefaultXYDataset();
+
             dataset.addSeries("New infections per time (model)", createSeries(dx, dy, dx[dx.length - 1] + 1));
 
-            addMaximum("infections", imax, dx, dy);
+            addMaximum(dataset, "infections", imax, dx, dy);
 
             double[][] result = model.getResult();
             double deathRate;// = result[im][4];
@@ -97,9 +103,9 @@ public class FrameOfRate extends AbstractFrame {
 
             dataset.addSeries("deaths per time (model)", createSeries(dx, dy1d, dx[dx.length - 1] + 1));
 
-            addMaximum("deaths per time", -1, dx, dy1d);
+            addMaximum(dataset, "deaths per time", -1, dx, dy1d);
 
-            dataset.addSeries("Smoothed infections per time (model)", createSeries(xy1[0], xy1[1], dx1[l]));
+//            dataset.addSeries("Smoothed infections per time (model)", createSeries(xy1[0], xy1[1], dx1[l]));
 
             chart = ChartFactory.createXYLineChart(
                     String.format("Rate of new infections per time for %s", input.getName()),
@@ -161,15 +167,11 @@ public class FrameOfRate extends AbstractFrame {
             adjustPlot(plot, 0, xmax);
             saveChart(chart, prefix, l, true);
         }
-        if (chart != null) {
-            for (int i = count; i < count + REPEAT_FRAME; i++) {
-                saveChart(chart, prefix, i, true); //several frames to pause
-            }
-        }
+        duplicateChart(chart, prefix, count, count + REPEAT_FRAME, true);
 
     }
 
-    private void addMaximum(String key, int imax, double[] x, double[] y) {
+    private void addMaximum(DefaultXYDataset dataset, String key, int imax, double[] x, double[] y) {
         int max = imax;
         double dmax = -1;
         if (max < 0) {

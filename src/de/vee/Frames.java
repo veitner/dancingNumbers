@@ -33,20 +33,41 @@ import java.util.Locale;
 import java.util.Map;
 
 public class Frames extends AbstractFrame {
+    double xmax;
+    boolean adjustY;
+    boolean markLast;
 
-    protected Frames(Input input, int id) {
+    protected Frames(Input input, int id, double xmax, boolean adjustY, boolean markLast) {
         super(input, null, id);
+        this.xmax = xmax;
+        this.adjustY = adjustY;
+        this.markLast = markLast;
     }
 
-    private void createFrames(double xmax, boolean adjustY, boolean markLast) {
-        FrameOfCumulativeData cd = new FrameOfCumulativeData(input, model, id);
-        cd.createFrames(adjustY, markLast);
+    @Override
+    void doCreateFrames() {
+        FrameOfCumulativeData cd = new FrameOfCumulativeData(input, model, id, adjustY, markLast);
+//        SwingUtilities.invokeLater(cd::createFrames);
+        cd.createFrames();
         FrameOfParameterAnalysis pa = new FrameOfParameterAnalysis(input, model, id);
+//        SwingUtilities.invokeLater(pa::createFrames);
         pa.createFrames();
-        FrameOfRate rate = new FrameOfRate(input, model, id);
-        rate.createFrames(Math.max(xmax, TODAY), false, markLast);
-        FrameOfICU icu = new FrameOfICU(input, model, id);
-        icu.createFrames(Math.max(xmax, TODAY));
+        FrameOfRate rate = new FrameOfRate(input, model, id, Math.max(xmax, TODAY), false, markLast);
+//        SwingUtilities.invokeLater(rate::createFrames);
+        rate.createFrames();
+        FrameOfICU icu = new FrameOfICU(input, model, id, Math.max(xmax, TODAY));
+//        SwingUtilities.invokeLater(icu::createFrames);
+        icu.createFrames();
+
+        boolean done = false;
+        while (!done) {
+            try {
+                done = pa.finished() && rate.finished() && icu.finished();
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
         System.out.println("\nDONE!");
     }
 
@@ -70,10 +91,12 @@ public class Frames extends AbstractFrame {
                     input = input.withSlice(new double[]{30, 61});
                 } else if (region.toLowerCase().contains("south_africa")) {
                     input = input.withSlice(new double[]{72, 88});
+                } else if (region.toLowerCase().contains("italy")) {
+//                    input = input.withSlice(new double[]{65, 81});
                 }
             }
-            Frames frame = new Frames(input, key);
-            frame.createFrames(360, true, false);
+            Frames frame = new Frames(input, key, 360, true, false);
+            new Thread(frame::createFrames).start();
         }
     }
 

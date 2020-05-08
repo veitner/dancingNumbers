@@ -32,8 +32,7 @@ import static de.vee.model.Bisection.find;
 import static de.vee.model.ModelFactory.createModel;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-class AbstractFrame {
-    final DefaultXYDataset dataset = new DefaultXYDataset();
+abstract class AbstractFrame {
     final Input input;
     static double TODAY;
     static final int CHART_WIDTH = 1280;//(int) Math.round(1.8 * 640);
@@ -44,6 +43,7 @@ class AbstractFrame {
     final double[] y;
     final double[] dr;
     final Model model;
+    private boolean finished;
 
     /**
      * @param input the input data
@@ -73,12 +73,17 @@ class AbstractFrame {
     }
 
 
-    void createFrames() {
+    final void createFrames() {
         System.out.println(input.getTitle() + String.format(": Processing (%s::createFrames) ....", getClass().getName().replace("de.vee.FrameOf", "")));
-        clearDataset();
+        finished = false;
+        doCreateFrames();
+//        clearDataset();
+        finished = true;
     }
 
-    void clearDataset() {
+    abstract void doCreateFrames();
+
+    void clearDataset(DefaultXYDataset dataset) {
         for (int i = dataset.getSeriesCount() - 1; i >= 0; i--) {
             dataset.removeSeries(dataset.getSeriesKey(i));
         }
@@ -183,28 +188,52 @@ class AbstractFrame {
 
         //remove legend for series containing max
         LegendItemCollection legend = plot.getLegendItems();
+        LegendItemCollection legend2 = new LegendItemCollection();
         Iterator iterator = legend.iterator();
         while (iterator.hasNext()) {
             LegendItem item = (LegendItem) iterator.next();
-            if (item.getLabel().toLowerCase().contains("maximum"))
-                iterator.remove();
+            if (item.getLabel().toLowerCase().contains("maximum")) {
+//                iterator.remove();
+            } else {
+                legend2.add(item);
+            }
         }
-        plot.setFixedLegendItems(legend);
+        plot.setFixedLegendItems(legend2);
     }
 
-    void saveChart(JFreeChart chart, String prefix, int postfix, boolean waterMark) {
+    File saveChart(JFreeChart chart, String prefix, int postfix, boolean waterMark) {
         File file = new File(String.format("gr/%s_p_%04d.png", prefix, postfix));
+/*
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+*/
         try {
             ChartUtils.saveChartAsPNG(file, chart, CHART_WIDTH, CHART_HEIGHT);
             if (waterMark) {
-                File f2 = new File(file.getName() + ".wm");
-                addTextWatermark("Beware: Prediction based on simple model", file, f2);
-                Files.copy(f2.toPath(), file.toPath(), REPLACE_EXISTING);
-                Files.delete(f2.toPath());
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        File f2 = new File(file.getName() + ".wm");
+                        addTextWatermark("Beware: Prediction based on simple model", file, f2);
+                        try {
+                            Files.copy(f2.toPath(), file.toPath(), REPLACE_EXISTING);
+                            Files.delete(f2.toPath());
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return file;
+/*
+
+            }
+        });
+*/
     }
 
     /**
@@ -243,5 +272,36 @@ class AbstractFrame {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
+    }
+
+    protected boolean finished() {
+        return finished;
+    }
+
+    protected void duplicateChart(JFreeChart chart, String prefix, int start, int end, boolean waterMark) {
+        if (chart != null) {
+            try {
+                Thread.sleep(300); //wait a bit to finish the previous action
+            } catch (InterruptedException ignored) {
+            }
+            for (int i = start; i < end; i++) { //several frames to pause
+                File src = new File(String.format("gr/%s_p_%04d.png", prefix, i - 1));
+                if (src.exists()) {
+                    File trg = new File(String.format("gr/%s_p_%04d.png", prefix, i));
+                    try {
+                        Files.copy(src.toPath(), trg.toPath(), REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    saveChart(chart, prefix, i, waterMark);
+                    try {
+                        Thread.sleep(300); //wait a bit to finish the previous action
+                    } catch (InterruptedException ignored) {
+                    }
+                }
+            }
+        }
+
     }
 }

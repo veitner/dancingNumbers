@@ -9,18 +9,21 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.title.TextTitle;
+import org.jfree.data.xy.DefaultXYDataset;
 
 import static de.vee.model.FunFactory.createFunction;
 
 class FrameOfICU extends AbstractFrame {
 
-    FrameOfICU(Input input, Model m, int id) {
+    private final double xmax;
+
+    FrameOfICU(Input input, Model m, int id, double xmax) {
         super(input, m, id);
+        this.xmax = xmax;
     }
 
-    void createFrames(double xmax) {
-        super.createFrames();
-
+    @Override
+    void doCreateFrames() {
         String prefix = String.format("0%02d4_5", id);
 
         int count = x.length;
@@ -44,6 +47,7 @@ class FrameOfICU extends AbstractFrame {
             int m = params.length - 1;
             double[] deaths = DeathRate.getRate(x1, g, params[m - 2], params[m - 1], params[m]);
 
+            DefaultXYDataset dataset = new DefaultXYDataset();
             chart = ChartFactory.createXYLineChart(
                     String.format("Estimated demand on ICU of model for %s", input.getName()),
                     "Days since 01/20/2020",
@@ -87,10 +91,6 @@ class FrameOfICU extends AbstractFrame {
             adjustPlot(plot, 0, xmax);
             saveChart(chart, prefix, l, true);
         }
-        if (chart != null) {
-            for (int i = count; i < count + 3 * REPEAT_FRAME; i++) {
-                saveChart(chart, prefix, i, true); //several frames to pause
-            }
-        }
+        duplicateChart(chart, prefix, count, count + 3 * REPEAT_FRAME, true);
     }
 }

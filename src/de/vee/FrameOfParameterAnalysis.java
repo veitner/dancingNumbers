@@ -9,6 +9,7 @@ import org.jfree.chart.LegendItemCollection;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.data.Range;
+import org.jfree.data.xy.DefaultXYDataset;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -20,14 +21,14 @@ public class FrameOfParameterAnalysis extends AbstractFrame {
     }
 
     @Override
-    void createFrames() {
-        super.createFrames();
+    void doCreateFrames() {
         String prefix = String.format("0%02d2", id);
 
         double[][] a = model.getResult();
         int start = model.getStart();
 
-        clearDataset();
+//        clearDataset();
+        DefaultXYDataset dataset = new DefaultXYDataset();
         for (int l = 0; l < 3; l++) {
             double[][] d = new double[2][x.length];
             for (int j = start + 1; j < x.length; j++) {
@@ -73,9 +74,7 @@ public class FrameOfParameterAnalysis extends AbstractFrame {
 
         plot.setRenderer(new Renderer_For_Analysis());
 
-        for (int i = 0; i < REPEAT_FRAME; i++) {
-            saveChart(chart, prefix, i, false); //several frames to pause the display
-        }
+        duplicateChart(chart, prefix, 0, REPEAT_FRAME, false);
 
     }
 }

@@ -9,17 +9,22 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.title.TextTitle;
+import org.jfree.data.xy.DefaultXYDataset;
 
 import static de.vee.model.FunFactory.createFunction;
 
 class FrameOfCumulativeData extends AbstractFrame {
+    boolean adjustY;
+    boolean markLast;
 
-    FrameOfCumulativeData(Input input, Model m, int id) {
+    FrameOfCumulativeData(Input input, Model m, int id, boolean adjustY, boolean markLast) {
         super(input, m, id);
+        this.adjustY = adjustY;
+        this.markLast = markLast;
     }
 
-    void createFrames(boolean adjustY, boolean markLast) {
-        super.createFrames();
+    @Override
+    void doCreateFrames() {
         String prefix = String.format("0%02d1_1", id);
 
         int start = model.getStart();
@@ -125,13 +130,15 @@ class FrameOfCumulativeData extends AbstractFrame {
     private void createChart(String prefix, LogisticFunc gp, LogisticFunc g, int day, boolean pause, int mark) {
         String dateStringLong = getDateStringLong(day);
         int xmax = (int) Math.round(Math.min(x[x.length - 1], day));
+        DefaultXYDataset dataset = new DefaultXYDataset();
         dataset.addSeries("Infections reported", createSeries(x, y, xmax));
+
+        if (g != null) {
+            dataset.addSeries("Infections current model", g.getSeriesData(xmax + 2));
+        }
 
         if (gp != null) {
             dataset.addSeries("Infections previous model", gp.getSeriesData(xmax + 1));
-        }
-        if (g != null) {
-            dataset.addSeries("Infections current model", g.getSeriesData(xmax + 2));
         }
 
         double[][] data = input.getData();
@@ -164,9 +171,7 @@ class FrameOfCumulativeData extends AbstractFrame {
         saveChart(chart, prefix, day, false);
 
         if (pause) {
-            for (int i = day + 1; i < day + REPEAT_FRAME; i++) {
-                saveChart(chart, prefix, i, false); //several frames to pause the display
-            }
+            duplicateChart(chart, prefix, day + 1, day + REPEAT_FRAME, false);
         }
 
 
