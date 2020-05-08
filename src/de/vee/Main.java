@@ -80,13 +80,9 @@ public class Main extends JFrame {
                 } catch (IOException ex) {
                     ex.printStackTrace();
                 }
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        Frames.process(regions, delta, constraints, inflectionPoint, slices);
-                    }
-                };
-                new Thread(r).start();
+
+                Frames.process(regions, delta, constraints, inflectionPoint, slices);
+
             }
         });
 /*
