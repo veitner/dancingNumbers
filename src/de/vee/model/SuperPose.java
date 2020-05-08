@@ -63,11 +63,15 @@ public class SuperPose implements LogisticFunc {
         }
         double a0 = -1e3;
         for (int i = 0; i < n; i++) {
-            f[i] = new Gompertz(a[i], N);
+            f[i] = new GompertzEx(a[i], N);
             double b0 = sl[i];
             b[i] = new Box(a0, b0);
             a0 = b0;
         }
+    }
+
+    public static double[][] getConstraints() {
+        return GompertzEx.getConstraints();
     }
 
     @Override
@@ -106,4 +110,8 @@ public class SuperPose implements LogisticFunc {
         return data;
     }
 
+    @Override
+    public double[] estimateInitialValues(double[] x, double[] y) {
+        return f[0].estimateInitialValues(x, y);
+    }
 }

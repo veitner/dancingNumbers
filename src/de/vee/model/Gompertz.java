@@ -28,8 +28,8 @@ package de.vee.model;
 import java.util.Arrays;
 
 class Gompertz implements LogisticFunc {
-    private double[] a;
-    private double N;
+    protected double[] a;
+    protected double N;
     private static int dof = 3;
 
     public static int DOF() {
@@ -68,4 +68,22 @@ class Gompertz implements LogisticFunc {
         return data;
     }
 
+
+    @Override
+    public double[] estimateInitialValues(double[] x, double[] y) {
+        double[] b = new double[a.length];
+        b[0] = a[0];
+        b[1] = -Math.log(y[1] / a[0] / N) * Math.exp(-x[1] * Math.log(Math.log(y[1] / a[0] / N) / Math.log(y[0] / a[0] / N)) / (x[1] - x[0]));
+        b[2] = -Math.log(Math.log(y[1] / a[0] / N) / Math.log(y[0] / a[0] / N)) / (x[1] - x[0]);
+        return b;
+    }
+
+    public static double[][] getConstraints() {
+        return new double[][]{
+                {1e-7, 0.25},//a0_min,a0_max
+                {1e-6, 7e3}, //a1_min,a1_max
+                {1e-6, 9e-1}, //a2_min,a2_max
+//            {0.5, 20}, //a3_min,a3_max
+        };
+    }
 }

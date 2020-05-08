@@ -27,6 +27,7 @@ package de.vee.model;
 
 import com.nr.RealValueFun;
 
+//public class SumOfSquares implements RealValueFun, MultivariateFunction {
 public class SumOfSquares implements RealValueFun {
     double[][] ctrs;
     double[] slice;
@@ -37,6 +38,17 @@ public class SumOfSquares implements RealValueFun {
     int imax;
     protected double N;
 
+    /*
+        SimpleBounds getSimpleBounds() {
+            double[] lb = new double[ctrs.length];
+            double[] ub = new double[ctrs.length];
+            for (int i=0; i<lb.length; i++) {
+                lb[i] = ctrs[i][0];
+                ub[i] = ctrs[i][1];
+            }
+            return new SimpleBounds(lb,ub);
+        }
+    */
     SumOfSquares(double[] xdata, double[] ydata, double max, double N, double[] my, double[][] ctrs, double[] slice) {
         this.xdata = xdata;
         this.ydata = ydata;
@@ -72,9 +84,14 @@ public class SumOfSquares implements RealValueFun {
         return penalty;
     }
 
+    //    @Override
+    public double value(double[] point) {
+        return funk(point);
+    }
+
     public double funk(double[] x) {
         double penalty = getPenalty(x);
-        LogisticFunc f = new SuperPose(x, slice, N);//createFunction(x, N);
+        LogisticFunc f = FunFactory.createFunction(x, slice, N);//createFunction(x, N);
         double sq = 0;
         double yo = 0;
         double y1o = 0;

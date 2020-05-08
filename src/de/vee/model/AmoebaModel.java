@@ -132,7 +132,7 @@ public class AmoebaModel extends Model {
             }
 //            if (j < 1e9) continue;
             //and then for percentage
-            sumOfSquares2.f = new SuperPose(v, slice, input.N);
+            sumOfSquares2.f = FunFactory.createFunction(v, slice, input.N);
             sumOfSquares2.imax = j + 1;
             h = Arrays.copyOf(input.dels2, input.dels.length);
 

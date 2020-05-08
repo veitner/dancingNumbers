@@ -25,6 +25,8 @@
 
 package de.vee.model;
 
+import java.util.Arrays;
+
 public abstract class Model {
     static final boolean VERBOSE = true;
     int start;
@@ -78,10 +80,11 @@ public abstract class Model {
         }
         if ((y1 > 0) && (y2 > y1)) {
             input.v[0] = 0.02;
-            double a0 = input.v[0];
-            double N = input.N;
-            input.v[1] = -Math.log(y2 / a0 / N) * Math.exp(-x2 * Math.log(Math.log(y2 / a0 / N) / Math.log(y1 / a0 / N)) / (x2 - x1));
-            input.v[2] = -Math.log(Math.log(y2 / a0 / N) / Math.log(y1 / a0 / N)) / (x2 - x1);
+            LogisticFunc f = FunFactory.createFunction(input.v, new double[]{}, input.N);
+            double[] x = {x1, x2};
+            double[] y = {y1, y2};
+            double[] a = f.estimateInitialValues(x, y);
+            input.v = Arrays.copyOf(a, a.length);
             input.dels[1] = input.v[1] / 5.;
             input.dels[2] = input.v[2] / 5.;
             return true;
