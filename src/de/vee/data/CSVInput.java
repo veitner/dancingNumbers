@@ -262,8 +262,8 @@ public class CSVInput {
         lst.sort(Comparator.comparingLong(CSVRecord::daysSinceStart));
 
         int i = 0;
-        long cases = 0;
-        long deaths = 0;
+//        long cases = 0;
+//        long deaths = 0;
         long oc = 0;
         for (CSVRecord record : lst) {
             if (N[0] != record.popData2018) N[0] = record.popData2018;
@@ -271,8 +271,8 @@ public class CSVInput {
             if ((day > 20) && (record.cases > 0)) {
                 if (oc != record.cases) {
                     x[i] = day - 20;
-                    y[i] = (cases += record.cases);
-                    dr[i] = (deaths += record.deaths);
+                    y[i] = record.cases; //(cases += record.cases);
+                    dr[i] = record.deaths; //(deaths += record.deaths);
                     i++;
                 }
                 oc = record.cases;
@@ -343,7 +343,7 @@ public class CSVInput {
                 dr[i] = e.dr;
             }
 
-///* //looks also weird
+/* //looks also weird
             Input china1 = Input.get("China", 1428E6); //remove china
 //                    .withDelta(new double[]{0.1, 0.2, 0.1, 0})
 //                    .withInitial(new double[]{1.E-5, 17, 14.E-2, 14});
@@ -369,7 +369,7 @@ public class CSVInput {
             while (i < y.length - m - 1) {
                 if (y[i + 1] <= y[i]) {
                     int o = 1;
-                    while (y[i + o + 1] <= y[i]) o++;
+                    while ((y[i + o + 1] <= y[i]) && (i + o + 2 < y.length)) o++;
                     for (int j = i + 1; j + o < y.length - m; j++) {
                         x[j] = x[j + o];
                         y[j] = y[j + o];
@@ -383,7 +383,7 @@ public class CSVInput {
             x = Arrays.copyOf(x, x.length - m);
             y = Arrays.copyOf(y, y.length - m);
             dr = Arrays.copyOf(dr, dr.length - m);
-//*/
+*/
 
             l.clear();
         } else if ("europe".compareToIgnoreCase(key) == 0) {
@@ -441,26 +441,6 @@ public class CSVInput {
                 dr[i] = e.dr;
             }
 
-            //make it monotone again
-            int i = 0;
-            int m = 0;
-            while (i < y.length - m - 1) {
-                if (y[i + 1] <= y[i]) {
-                    int o = 1;
-                    while (y[i + o + 1] <= y[i]) o++;
-                    for (int j = i + 1; j + o < y.length - m; j++) {
-                        x[j] = x[j + o];
-                        y[j] = y[j + o];
-                        dr[j] = dr[j + o];
-                    }
-                    m += o;
-                } else {
-                    i++;
-                }
-            }
-            x = Arrays.copyOf(x, x.length - m);
-            y = Arrays.copyOf(y, y.length - m);
-            dr = Arrays.copyOf(dr, dr.length - m);
 //*/
 
             l.clear();
@@ -512,6 +492,8 @@ public class CSVInput {
         var[2] = Arrays.copyOf(dr1, k);
 */
 
+/*
+//do not care about
         if (key.toLowerCase().contains("china")) {
             System.out.println("Modifying data because the reporting strategy has changed in between ...");
 
@@ -531,13 +513,17 @@ public class CSVInput {
                 y[i] *= (1. + rd);
             }
         }
+*/
 
-
+        for (int i = 1; i < y.length; i++) {
+            y[i] += y[i - 1];
+            dr[i] += dr[i - 1];
+        }
         var[0] = x;
         var[1] = y;
         var[2] = dr;
         input.setData(var);
-//        save(input.getName(), x, y);
+        save(input.getName(), x, y);
         return input;
     }
 
