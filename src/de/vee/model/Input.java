@@ -56,15 +56,12 @@ public class Input implements Cloneable {
     private double ymax = 100000;
     private double[][] data = null;
     boolean withInflectionPoint = false;
-    private double[][] constraints = {
-            {1e-7, 0.25},//a0_min,a0_max
-            {1e-6, 7e3}, //a1_min,a1_max
-            {1e-6, 9e-1}, //a2_min,a2_max
-//            {0.5, 20}, //a3_min,a3_max
-    };
+    private double[][] constraints = FunFactory.getConstraints();
+
+
     private double[][] constraints2 = {
             {1e-3, 0.3}, //percentage_min,percentage_max
-            {0.1, 14},//shift_min,shift_max
+            {0.1, 21},//shift_min,shift_max
             {0.05, 3.} //p_min,p_max
     };
 
