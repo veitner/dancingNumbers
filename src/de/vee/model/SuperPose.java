@@ -35,6 +35,20 @@ public class SuperPose implements LogisticFunc {
     double[][] a;
     double sigma = 1;
 
+    private Gompertz createModelFunction(double[] a, double N) {
+        return new Gompertz(a, N);
+//        return new GompertzEx(a,N);
+    }
+
+    public static double[][] getConstraints() {
+        return Gompertz.getConstraints();
+    }
+
+    private int dof() {
+        return Gompertz.DOF();
+    }
+
+
     public SuperPose(double[] x, double[] slice, double N) {
         super();
         if (slice != null) {
@@ -49,29 +63,25 @@ public class SuperPose implements LogisticFunc {
         sl[sl.length - 1] = 1e4;
         f = new Gompertz[n];
         b = new Box[n];
-        a = new double[n][Gompertz.DOF()];
+        a = new double[n][dof()];
         for (int i = 0; i < n; i++) {
-            int ii = i * Gompertz.DOF();
+            int ii = i * dof();
             a[i][0] = x[ii];
             a[i][1] = x[ii + 1];
             a[i][2] = x[ii + 2];
         }
-        if (x.length > n * Gompertz.DOF() + 3) {
-            sigma = Math.max(1.e-3, x[n * Gompertz.DOF()]); //one sigma to blend all the elements
+        if (x.length > n * dof() + 3) {
+            sigma = Math.max(1.e-3, x[n * dof()]); //one sigma to blend all the elements
         } else {
             sigma = SIGMA;
         }
         double a0 = -1e3;
         for (int i = 0; i < n; i++) {
-            f[i] = new GompertzEx(a[i], N);
+            f[i] = createModelFunction(a[i], N);
             double b0 = sl[i];
             b[i] = new Box(a0, b0);
             a0 = b0;
         }
-    }
-
-    public static double[][] getConstraints() {
-        return GompertzEx.getConstraints();
     }
 
     @Override
