@@ -1,0 +1,88 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This file is a template using the "beamer" package to create slides for a talk or presentation
+% - Introducing another speaker.
+% - Talk length is about 2min.
+% - Style is ornate.
+
+% MODIFIED by Jonathan Kew, 2008-07-06
+% The header comments and encoding in this file were modified for inclusion with TeXworks.
+% The content is otherwise unchanged from the original distributed with the beamer package.
+
+\documentclass{beamer}
+
+
+% Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
+%
+% In principle, this file can be redistributed and/or modified under
+% the terms of the GNU Public License, version 2.
+%
+% However, this file is supposed to be a template to be modified
+% for your own needs. For this reason, if you use this file as a
+% template and not specifically distribute it as part of a another
+% package/program, the author grants the extra permission to freely
+% copy and  modify this file as you see fit and even to delete this
+% copyright notice. 
+
+
+%\setbeamertemplate{background canvas}[vertical shading][bottom=white,top=structure.fg!25]
+% or whatever
+\newcommand{\e}{\rm e}
+\newcommand{\dx}{{\rm d}x}
+\newcommand{\dt}{{\rm d}t}
+%\usetheme{Warsaw}
+\setbeamertemplate{headline}{}
+\setbeamertemplate{footline}{}
+\setbeamersize{text margin left=0.5cm}
+  
+\usepackage[english]{babel}
+% or whatever
+
+\usepackage[utf8]{inputenc}
+% or whatever
+
+\usepackage{times}
+\usepackage[T1]{fontenc}
+% Or whatever. Note that the encoding and the font should match. If T1
+% does not look nice, try deleting the line with the fontenc.
+
+
+
+\begin{document}
+
+\begin{frame}{Slightly Modified Gompertz Function}{}
+
+  \begin{itemize}
+  \item
+    Gompertz differential equation
+\[
+\frac{\dx}{\dt}=h(t)\ln\left({\frac{k}{x(t)}}\right)x(t)
+\]
+ \begin{itemize}
+    \item
+      Gompertz: $h(t)=\alpha=const.$  
+    \end{itemize}
+\item
+Possible solution
+\[
+x(t)=k \e^{\left(-{a_0} \e^{\left(-\int{h(t) \dt}\right)}\right)}
+\]
+   
+  \item
+   Choosing
+\[
+h(t)=a_1 \e^{\left(-a_2 t\right)}
+\]
+  \item
+   leads to
+\[
+x(t)=k \e^{\left(-{a_0}\e^{\left(\frac{a_1}{a_2} \e^{\left({-a_2 t}\right)}\right)}\right)}
+\]
+
+  \end{itemize}  
+\end{frame}
+
+\end{document}
+
+
