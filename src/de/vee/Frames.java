@@ -93,6 +93,10 @@ public class Frames extends AbstractFrame {
                     input = input.withSlice(new double[]{72, 88});
                 } else if (region.toLowerCase().contains("italy")) {
 //                    input = input.withSlice(new double[]{65, 81});
+                } else if (region.toLowerCase().contains("states_of_america")) {
+                    input = input.withSlice(new double[]{83});
+                } else if (region.toLowerCase().contains("german")) {
+                    input = input.withSlice(new double[]{102});
                 }
             }
             Frames frame = new Frames(input, key, 360, true, false);
@@ -103,12 +107,12 @@ public class Frames extends AbstractFrame {
     public static void main(String[] args) {
         Locale.setDefault(Locale.ENGLISH);
         Map<Integer, String> regions = new HashMap<>();
-        regions.put(97, "World");
+//        regions.put(97, "World");
 //        regions.put(1, "Europe");
-//        regions.put(2, "Italy");
-//        regions.put(3, "Spain");
-//        regions.put(4, "France");
-//        regions.put(5, "Germany");
+        regions.put(2, "Italy");
+        regions.put(3, "Spain");
+        regions.put(4, "France");
+        regions.put(5, "Germany");
 //        regions.put(6, "Poland");
 //        regions.put(7, "Austria");
 //        regions.put(8, "Switzerland");
@@ -137,7 +141,7 @@ public class Frames extends AbstractFrame {
 //        slices.put(3, new double[]{70, 77});
 //        slices.put(4, new double[]{70, 84});
 //        slices.put(5, new double[]{/*52, 60,*/ 67, 76, 84});
-        slices.put(5, new double[]{/*52, 60,*/ 86}); //90: reopening of shops
+//        slices.put(5, new double[]{/*52, 60,*/ 86}); //90: reopening of shops
 //        slices.put(9, new double[]{82});
 //        slices.put(43, new double[]{/*52, 60,*/ 76, 84});
         try {
