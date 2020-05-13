@@ -31,14 +31,7 @@ public class DeathRate {
         if (shift < 1e-3) {
             return new double[x.length];
         }
-        double[] dy = Convolve.eval(x, f, deathRate, shift, p); //convolution
-/*
-        double[] dy = new double[x.length];
-        for (int i=0; i<dy.length; i++) {
-            dy[i] = f.evaluate(x[i]);
-        }
-*/
-        return dy;
+        return Convolve.eval(x, f, deathRate, shift, p); //convolution
     }
 
     public static double[] getDeaths(double[] x, LogisticFunc f, double deathRate, double shift, double p) {

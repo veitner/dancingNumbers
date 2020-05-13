@@ -83,7 +83,7 @@ class FrameOfICU extends AbstractFrame {
                     }
                     dataset.addSeries(String.format("%d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(days[j])), createSeries(x1, y1, x1[x1.length - 1] + 1));
 //                    */
-//                    double[] y11 = Convolve.eval(x1, deaths, p[i], days[j], 0.5);
+//                    double[] y11 = Convolve.evalA(x1, deaths, p[i], days[j], 0.5);
 //                    dataset.addSeries(String.format("%d ICU per death required for %d days", (int) Math.round(p[i]), (int) Math.round(days[j])), createSeries(x1, y11, x1[x1.length - 1] + 1));
                 }
             }

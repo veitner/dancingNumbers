@@ -63,15 +63,33 @@ public class Convolve {
      */
     static double[] eval(double[] x, LogisticFunc g, double percentage, double shift, double p) {
         int n = x.length;
-        double[] y1 = new double[n];
         int bins = getBins(x, shift);
+        double[] y = new double[n];
+        for (int j = 0; j < n; j++) {
+            y[j] = g.derivative(x[j]);
+        }
+        return eval(y, percentage, shift, p, bins);
+    }
+
+    /**
+     * Convolution to calculate death rate - look back
+     *
+     * @param y          y-values
+     * @param percentage factor
+     * @param shift      shift
+     * @param p          p*shift = sigma
+     * @return f*g(t-days)
+     */
+    static double[] eval(double[] y, double percentage, double shift, double p, int bins) {
+        int n = y.length;
+        double[] y1 = new double[n];
         Convolution c = new Convolution(Math.abs(p * shift), bins, shift);
         for (int i = 0; i < n; i++) {
             y1[i] = 0.;
             for (int k = 0; k < bins; k++) {
                 int j = i - bins + k + 1;
                 if (j > -1) {
-                    y1[i] += c.getBin(k - bins / 2) * g.derivative(x[j]);
+                    y1[i] += c.getBin(k - bins / 2) * y[j];
                 }
             }
             y1[i] *= percentage;
@@ -89,12 +107,21 @@ public class Convolve {
      * @param p          p*shift = sigma
      * @return f*g(t-days)
      */
-    public static double[] eval(double[] x, double[] y, double percentage, double shift, double p) {
-        return eval(x, y, percentage, shift, p, getBins(x, shift));
+    public static double[] evalA(double[] x, double[] y, double percentage, double shift, double p) {
+        return evalA(y, percentage, shift, p, getBins(x, shift));
     }
 
-    public static double[] eval(double[] x, double[] y, double percentage, double shift, double p, int bins) {
-        int n = x.length;
+    /**
+     * Convolution to estimate ICU - look ahead
+     *
+     * @param y          y-values
+     * @param percentage factor
+     * @param shift      shift
+     * @param p          p*shift = sigma
+     * @return f*g(t-days)
+     */
+    public static double[] evalA(double[] y, double percentage, double shift, double p, int bins) {
+        int n = y.length;
         double[] y1 = new double[n];
         Convolution c = new Convolution(Math.abs(p * shift), bins, shift);
         for (int i = 0; i < n; i++) {
@@ -127,8 +154,8 @@ public class Convolve {
             i++;
         }
 
-        y1 = eval(x1, y1, 1., 7., 1., 7); //smooth twice
-//        y1 = eval(x1, y1, 1., 7., 1., 7);
+        y1 = evalA(y1, 1., 7., 1., 7); //smooth twice
+//        y1 = eval(y1, 1., 7., 1., 7);
 
         double fx = 0.85;
         for (i = Math.max(0, k - 7); i < Math.min(y.length, k + 2 * 15); i++) {
