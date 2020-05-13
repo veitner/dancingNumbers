@@ -34,9 +34,14 @@ public class SumOfSquares implements RealValueFun {
     final double[] xdata;
     final double[] ydata;
     double[] my;
+    private double chisq;
+    private double theil;
+    private double rms;
 
     int imax;
     protected double N;
+    private double corrC = -1;
+    private boolean stats_ok = false;
 
     /*
         SimpleBounds getSimpleBounds() {
@@ -89,7 +94,81 @@ public class SumOfSquares implements RealValueFun {
         return funk(point);
     }
 
+    private void stats(double[] x, double[] y) {
+        chisq = 0.0;
+        theil = 0.0;
+        double ysq = 0.0;
+        int n = Math.min(x.length, y.length);
+        for (int i = 0; i < n; ++i) {
+            chisq += (x[i] - y[i]) * (x[i] - y[i]);
+            ysq += (y[i] * y[i]);
+        }
+        theil = Math.sqrt(chisq / ysq);
+
+        rms = 0.0;
+        for (int i = 0; i < n; ++i) {
+            rms += ((x[i] - y[i]) * (x[i] - y[i]) + 1.) /
+                    (y[i] * y[i] + 1.);
+        }
+        rms = Math.sqrt(rms / n);
+//        rms = 100.0 * Math.sqrt(rms / n);
+        double[] cor = {corrC};
+        if (correlation(x, y, n, cor) == 0) {
+            corrC = cor[0];
+        }
+    }
+
+    /*
+	compute mean and standard dev
+*/
+    private void stasum(double[] x, int n, double[] xbar, double[] sd) {
+        int i;
+        xbar[0] = 0;
+        sd[0] = 0;
+        if (x == null) {
+            return;
+        }
+        if (n < 1) {
+            return;
+        }
+        for (i = 0; i < n; i++) {
+            xbar[0] = (xbar[0]) + x[i];
+        }
+        xbar[0] = (xbar[0]) / n;
+        if (n > 1) {
+            for (i = 0; i < n; i++) {
+                sd[0] = (sd[0]) + (x[i] - xbar[0]) * (x[i] - xbar[0]);
+            }
+            sd[0] = Math.sqrt(sd[0] / (n - 1));
+        }
+    }
+
+
+    /*
+     * find correlation coefficient
+     */
+    private int correlation(double[] x, double[] y, int n, double[] cor) {
+        double[] xbar = {0}, xsd = {0};
+        double[] ybar = {0}, ysd = {0};
+        int i;
+        cor[0] = 0.0;
+        if (n < 2) {
+            return -1;
+        }
+        stasum(x, n, xbar, xsd);
+        stasum(y, n, ybar, ysd);
+        if (xsd[0] == 0.0 || ysd[0] == 0.0) {
+            return -1;
+        }
+        for (i = 0; i < n; i++) {
+            cor[0] += (x[i] - xbar[0]) * (y[i] - ybar[0]);
+        }
+        cor[0] /= ((n - 1) * xsd[0] * ysd[0]);
+        return 0;
+    }
+
     public double funk(double[] x) {
+        stats_ok = false;
         double penalty = getPenalty(x);
         LogisticFunc f = FunFactory.createFunction(x, slice, N);//createFunction(x, N);
         double sq = 0;
@@ -126,6 +205,37 @@ public class SumOfSquares implements RealValueFun {
         }
 //        return penalty * sq;
         return penalty * Math.sqrt(sq) / (2 * imax + 1);
+    }
+
+    void calculateStats(double[] x, LogisticFunc f) {
+        double[] y = new double[imax];
+        for (int i = 0; i < imax; i++) {
+            y[i] = f.evaluate(xdata[i]);
+        }
+        stats(y, ydata);
+        stats_ok = true;
+    }
+
+    double getTheil() {
+        return stats_ok ? theil : -1;
+    }
+
+    double getChisq() {
+        return stats_ok ? chisq : -1;
+    }
+
+    double getRms() {
+        return stats_ok ? rms : -1;
+    }
+
+    double getCorrC() {
+        return stats_ok ? corrC : -1;
+    }
+
+    String printStats(double[] x) {
+        LogisticFunc f = FunFactory.createFunction(x, slice, N);
+        calculateStats(x, f);
+        return "y = " + f.printFormula() + String.format("\nChi-Square: %g; Correlation coefficient: %f; RMS error: %g; Theil U coefficient: %g;", chisq, corrC, rms, theil);
     }
 
 }
