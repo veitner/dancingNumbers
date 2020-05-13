@@ -66,14 +66,18 @@ public class AmoebaModel extends Model {
         for (int j = start; j < x.length; j++) {
             System.out.printf("Day %.0f of %.0f\n", x[j], x[x.length - 1]);
             sumOfSquares.imax = j + 1;
+/*
             int nslice = 0;
             for (double u : input.slice) {
-                if (x[j] > u - SuperPose.SIGMA) {
+                if (x[j] > u + SuperPose.SIGMA) { //should be enough data available
                     nslice++;
                 }
             }
-            if (nslice > slice.length) {
-                slice = Arrays.copyOf(input.slice, nslice);
+*/
+            int nslice0 = slice.length;
+            slice = input.getSlice(x[j]);
+            int nslice = slice.length;
+            if (nslice > nslice0) {
                 sumOfSquares.slice = slice;
                 double[] vv = new double[(nslice + 1) * NX1];
                 double[] hh = new double[(nslice + 1) * NX1];
@@ -113,16 +117,11 @@ public class AmoebaModel extends Model {
                     c++;
                 }
             }
-            rms = amoeba.fmin;
+//            rms = amoeba.fmin;
             a[j] = Arrays.copyOf(v, v.length + v1.length);
 //            System.arraycopy(v, 0, a[j], 0, v.length);
             if (VERBOSE) {
-                double[] aa = a[j];
-                System.out.print("CumD:");
-                for (int i = 0; i < v.length; i++) {
-                    System.out.printf(" %f", aa[i]);
-                }
-                System.out.printf(" rms=%f\n", rms);
+                System.out.println(sumOfSquares.printStats(v));
             }
             if (input.withInflectionPoint) {
                 if (j - start > 3) {
@@ -161,7 +160,7 @@ public class AmoebaModel extends Model {
             rms = amoeba.fmin;
             if (VERBOSE) {
                 int k = a[j].length - 1;
-                System.out.printf("Rate: %f %f %f rms=%f\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);
+                System.out.printf("Rate: %f %f %f rms=%f\n\n", a[j][k - 2], a[j][k - 1], a[j][k], rms);
             }
         }
 

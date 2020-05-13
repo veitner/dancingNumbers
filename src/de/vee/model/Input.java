@@ -378,7 +378,7 @@ public class Input implements Cloneable {
     public double[] getSlice(double x) {
         int nslice = 0;
         for (double u : slice) {
-            if (x > u) {
+            if (x > u + SuperPose.SIGMA) {
                 nslice++;
             }
         }
