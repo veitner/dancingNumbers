@@ -2,8 +2,8 @@
  * Dancing Numbers - Logistic growth applied to Covid-19
  *
  * A naive approach to predict the spread of virus
- * 
- * 
+ *
+ *
  * Copyright (c) 2020 V. Eitner
  *
  * This file is part of "Dancing Numbers".
@@ -20,7 +20,7 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with "Dancing Numbers".  If not, see <https://www.gnu.org/licenses/>.
- *	
+ *
  */
 
 package de.vee.model;
@@ -85,5 +85,10 @@ class Gompertz implements LogisticFunc {
                 {1e-6, 9e-1}, //a2_min,a2_max
 //            {0.5, 20}, //a3_min,a3_max
         };
+    }
+
+    @Override
+    public String printFormula() {
+        return String.format("%g * %g * exp(-%g * exp(-%g * x)", a[0], N, a[1], a[2]);
     }
 }

@@ -35,4 +35,6 @@ public interface LogisticFunc {
     double[][] getSeriesData(int maxDays);
 
     double[] estimateInitialValues(double[] x, double[] y);
+
+    String printFormula();
 }

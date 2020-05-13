@@ -41,4 +41,11 @@ public class GompertzEx extends Gompertz {
         };
     }
 
+    @Override
+    public String printFormula() {
+        String t4 = String.format("exp(-%g * x)", a[2]);
+        String t6 = String.format("exp(%g / %g * %s", a[1], a[2], t4);
+        String t8 = String.format("exp(-%g * %s)", a[0], t6);
+        return String.format("%g * %s", N, t8);
+    }
 }
