@@ -9,14 +9,10 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 import java.util.*;
 
@@ -149,7 +145,7 @@ public class Main extends JFrame {
         constraints.gridy += 1;
         JLabel lbl = new JLabel("Add sub-epidemic at day");
 //        lbl.setToolTipText("for an intro to sub-epidemics watch https://www.youtube.com/watch?v=mugPlpYEYrQ&feature=youtu.be");
-        lbl.addMouseListener(new MouseAdapter() {
+    /*    lbl.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 try {
@@ -169,7 +165,7 @@ public class Main extends JFrame {
                 lbl.setText("Add sub-epidemic at day");
             }
 
-        });
+        });*/
         lbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         inputPanel.add(lbl, constraints);
 
