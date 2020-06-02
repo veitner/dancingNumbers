@@ -28,6 +28,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 
+import static de.vee.Info.IMAGES_FOLDER;
 import static de.vee.model.Bisection.find;
 import static de.vee.model.ModelFactory.createModel;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
@@ -90,7 +91,7 @@ abstract class AbstractFrame {
     }
 
     boolean chartExists(String prefix, int postfix) {
-//        File file = new File(String.format("gr/%s_p_%04d.png", prefix, postfix));
+//        File file = new File(String.format(IMAGES_FOLDER+"/%s_p_%04d.png", prefix, postfix));
 //        return !file.exists();
         return false;
     }
@@ -202,7 +203,14 @@ abstract class AbstractFrame {
     }
 
     File saveChart(JFreeChart chart, String prefix, int postfix, boolean waterMark) {
-        File file = new File(String.format("gr/%s_p_%04d.png", prefix, postfix));
+        File file;
+        String trg = String.format(IMAGES_FOLDER + "/%s_p_%04d.png", prefix, postfix);
+        if (waterMark) {
+            file = new File(trg + ".wk");
+        } else {
+            file = new File(trg);
+        }
+
 /*
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -217,8 +225,10 @@ abstract class AbstractFrame {
                         File f2 = new File(file.getName() + ".wm");
                         addTextWatermark("Beware: Prediction based on simple model", file, f2);
                         try {
-                            Files.copy(f2.toPath(), file.toPath(), REPLACE_EXISTING);
+                            File f1 = new File(trg);
+                            Files.copy(f2.toPath(), f1.toPath(), REPLACE_EXISTING);
                             Files.delete(f2.toPath());
+                            Files.delete(file.toPath());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -285,9 +295,9 @@ abstract class AbstractFrame {
             } catch (InterruptedException ignored) {
             }
             for (int i = start; i < end; i++) { //several frames to pause
-                File src = new File(String.format("gr/%s_p_%04d.png", prefix, i - 1));
+                File src = new File(String.format(IMAGES_FOLDER + "/%s_p_%04d.png", prefix, start));
                 if (src.exists()) {
-                    File trg = new File(String.format("gr/%s_p_%04d.png", prefix, i));
+                    File trg = new File(String.format(IMAGES_FOLDER + "/%s_p_%04d.png", prefix, i));
                     try {
                         Files.copy(src.toPath(), trg.toPath(), REPLACE_EXISTING);
                     } catch (IOException e) {

@@ -57,10 +57,7 @@ public class AmoebaModel extends Model {
 
         double[] v = Arrays.copyOf(input.v, input.v.length);
         double[] v1 = Arrays.copyOf(input.v2, input.v2.length);
-        double[][] ctrs = null;
-        if (constraints != null) {
-            ctrs = Arrays.copyOf(constraints, NX1);
-        }
+        double[][] ctrs;
         double[] slice = {};
         double[] h0 = Arrays.copyOf(dels, NX1);
         for (int j = start; j < x.length; j++) {
@@ -90,7 +87,7 @@ public class AmoebaModel extends Model {
                 for (int i = 0; i <= nslice; i++) {
                     int ii = i * NX1;
                     System.arraycopy(h0, 0, hh, ii, NX1);
-                    System.arraycopy(ctrs, 0, ctrsc, ii, NX1);
+                    System.arraycopy(FunFactory.getConstraints(i), 0, ctrsc, ii, NX1);
                 }
                 h0 = hh;
                 ctrs = ctrsc;

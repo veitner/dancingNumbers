@@ -35,14 +35,20 @@ public class SuperPose implements LogisticFunc {
     double[][] a;
     double sigma = 1;
 
-    private Gompertz createModelFunction(double[] a, double N) {
-//        return new Gompertz(a, N);
-        return new GompertzEx(a, N);
+    private Gompertz createModelFunction(int i, double[] a, double N) {
+        if (i < 0) {
+            return new Gompertz(a, N);
+        } else {
+            return new GompertzEx(a, N);
+        }
     }
 
-    public static double[][] getConstraints() {
-//        return Gompertz.getConstraints();
-        return GompertzEx.getConstraints();
+    public static double[][] getConstraints(int i) {
+        if (i < 0) {
+            return Gompertz.getConstraints();
+        } else {
+            return GompertzEx.getConstraints();
+        }
     }
 
     private int dof() {
@@ -79,7 +85,7 @@ public class SuperPose implements LogisticFunc {
         }
         double a0 = -1e3;
         for (int i = 0; i < n; i++) {
-            f[i] = createModelFunction(a[i], N);
+            f[i] = createModelFunction(i, a[i], N);
             double b0 = sl[i];
             b[i] = new Box(a0, b0);
             a0 = b0;

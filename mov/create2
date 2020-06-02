@@ -6,7 +6,7 @@ day=`date +%d`
 #day=$((day+39))
 #april
 #day=$((day+39+31))
-day=$((10#$day+70))
+day=$((10#$day+70+30))
 rm logisticGrowth_${day}.mp4
 ffmpeg -framerate 6 -i ../gr1/frame_%03d.png -c:v libx264 \
 -profile:v high -vprofile high -crf 10 -pix_fmt yuv420p logisticGrowth_${day}.mp4

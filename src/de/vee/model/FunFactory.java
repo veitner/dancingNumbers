@@ -32,7 +32,7 @@ public class FunFactory {
         return new SuperPose(a, slice, N);
     }
 
-    public static double[][] getConstraints() {
-        return SuperPose.getConstraints();
+    public static double[][] getConstraints(int i) {
+        return SuperPose.getConstraints(i);
     }
 }

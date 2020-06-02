@@ -9,14 +9,18 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.HashMap;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
+import static de.vee.Info.IMAGES_FOLDER;
 import static java.awt.BorderLayout.NORTH;
 
 public class Main extends JFrame {
@@ -45,18 +49,61 @@ public class Main extends JFrame {
         }, ps)));
 
 
+        Map<Integer, double[]> slices = new HashMap<>();
+        JTextField tfSubepidemic = new JTextField();
+
         inputPanel.add(new JLabel("Select Region"), constraints);
         JComboBox<String> cb = new JComboBox<>();
-        cb.addItem("World");
+/*
         cb.addItem("Europe");
+        cb.addItem("World");
+*/
         CSVInput input = new CSVInput();
         try {
-            List<String> regions = input.getRegions();
-            for (String entry : regions) {
+            List<String> entries = input.getRegions();
+            for (String entry : entries) {
                 cb.addItem(entry);
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        cb.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int index = cb.getSelectedIndex() + 1;
+                double[] subepidemics = slices.get(index);
+                if (subepidemics != null) {
+                    StringBuilder s = new StringBuilder();
+                    for (double subepidemic : subepidemics) {
+                        int value = (int) subepidemic;
+                        s.append(value).append(" ");
+                    }
+                    tfSubepidemic.setText(s.toString());
+                } else {
+                    tfSubepidemic.setText("");
+                }
+            }
+        });
+
+
+        for (int i = 0; i < cb.getItemCount(); i++) {
+            int key = i + 1;
+            String region = cb.getItemAt(i);
+            if (region.toLowerCase().contains("china")) {
+                slices.put(key, new double[]{30, 61});
+            } else if (region.toLowerCase().contains("south_africa")) {
+                slices.put(key, new double[]{72, 88});
+            } else if (region.toLowerCase().contains("italy")) {
+//                    input = input.withSlice(new double[]{65, 81});
+            } else if (region.toLowerCase().contains("iran")) {
+                slices.put(key, new double[]{67, 108, 114});
+            } else if (region.toLowerCase().contains("states_of_america")) {
+                slices.put(key, new double[]{83});
+            } else if (region.toLowerCase().contains("german")) {
+                slices.put(key, new double[]{98});
+            } else if (region.toLowerCase().contains("united_kingdom")) {
+                slices.put(key, new double[]{106});
+            }
         }
         constraints.gridy += 1;
         inputPanel.add(cb, constraints);
@@ -65,15 +112,28 @@ public class Main extends JFrame {
         buttonGo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+
                 ta.setText("");
                 java.util.Map<Integer, String> regions = new HashMap<>();
                 Map<Integer, double[]> delta = new HashMap<>();
                 Map<Integer, double[][]> constraints = new HashMap<>();
                 Map<Integer, Boolean> inflectionPoint = new HashMap<>();
-                Map<Integer, double[]> slices = new HashMap<>();
                 Object o = cb.getSelectedItem();
                 if (o != null) {
-                    regions.put(cb.getSelectedIndex() + 1, o.toString());
+                    int key = cb.getSelectedIndex() + 1;
+                    regions.put(key, o.toString());
+                    String s = tfSubepidemic.getText();
+                    StringTokenizer st = new StringTokenizer(s);
+                    int count = st.countTokens();
+                    if (count > 0) {
+                        double[] values = new double[count];
+                        for (int i = 0; i < count; i++) {
+                            values[i] = Double.parseDouble(st.nextToken());
+                        }
+                        slices.put(key, values);
+                    } else {
+                        slices.remove(key);
+                    }
                 }
                 try {
                     new Info(Frames.CHART_WIDTH, Frames.CHART_HEIGHT).applyTemplatesAndSave(regions);
@@ -85,20 +145,52 @@ public class Main extends JFrame {
 
             }
         });
-/*
-//too much effort for nothing ...
-        constraints.gridy+=1;
-        JLabel label = new JLabel("Slices");
-        inputPanel.add(label,constraints);
-        constraints.gridy+=1;
-        JTextField tf = new JTextField();
-        constraints.fill = GridBagConstraints.BOTH;
-        inputPanel.add(tf, constraints);
-        constraints.fill = GridBagConstraints.NONE;
-*/
+
+        constraints.gridy += 1;
+        JLabel lbl = new JLabel("Add sub-epidemic at day");
+//        lbl.setToolTipText("for an intro to sub-epidemics watch https://www.youtube.com/watch?v=mugPlpYEYrQ&feature=youtu.be");
+        lbl.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                try {
+                    Desktop.getDesktop().browse(new URI("https://www.youtube.com/watch?v=mugPlpYEYrQ&feature=youtu.be"));
+                } catch (IOException | URISyntaxException e1) {
+                    e1.printStackTrace();
+                }
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                lbl.setText("<html>Add <a href=\"\">sub-epidemic</a> at day</html>");
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                lbl.setText("Add sub-epidemic at day");
+            }
+
+        });
+        lbl.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        inputPanel.add(lbl, constraints);
+
+        constraints.gridy += 1;
+        constraints.fill = GridBagConstraints.HORIZONTAL;
+        inputPanel.add(tfSubepidemic, constraints);
 
         constraints.gridx += 1;
+        constraints.gridy = 1;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.gridheight = 4;
+        constraints.weighty = 0;
+        constraints.anchor = GridBagConstraints.CENTER;
+/*
+        JPanel pnl = new JPanel(new GridLayout(3, 1));
+        pnl.add(new Box(BoxLayout.X_AXIS));
+        pnl.add(buttonGo);
+        pnl.add(new Box(BoxLayout.X_AXIS));
+*/
         inputPanel.add(buttonGo, constraints);
+
         c.add(inputPanel, NORTH);
 
         JScrollPane sp = new JScrollPane(ta);
@@ -107,6 +199,15 @@ public class Main extends JFrame {
         c.add(sp, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel();
+        JButton buttonResult = new JButton("Open output folder");
+        buttonResult.addActionListener(e -> {
+            try {
+                Desktop.getDesktop().open(new File(IMAGES_FOLDER));
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+        buttonPanel.add(buttonResult);
         JButton buttonCleanUp = new JButton("Cleanup output folder");
         buttonCleanUp.addActionListener(e -> {
             try {

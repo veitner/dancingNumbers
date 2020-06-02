@@ -86,18 +86,22 @@ public class Frames extends AbstractFrame {
             }
             if (slices.containsKey(key)) {
                 input = input.withSlice(slices.get(key));
-            } else {
+            /*} else {
                 if (region.toLowerCase().contains("china")) {
                     input = input.withSlice(new double[]{30, 61});
                 } else if (region.toLowerCase().contains("south_africa")) {
                     input = input.withSlice(new double[]{72, 88});
                 } else if (region.toLowerCase().contains("italy")) {
 //                    input = input.withSlice(new double[]{65, 81});
+                } else if (region.toLowerCase().contains("iran")) {
+                    input = input.withSlice(new double[]{67, 108, 114});
                 } else if (region.toLowerCase().contains("states_of_america")) {
                     input = input.withSlice(new double[]{83});
                 } else if (region.toLowerCase().contains("german")) {
                     input = input.withSlice(new double[]{102});
-                }
+                } else if (region.toLowerCase().contains("united_kingdom")) {
+                    input = input.withSlice(new double[]{106});
+                }*/
             }
             Frames frame = new Frames(input, key, 360, true, false);
             new Thread(frame::createFrames).start();

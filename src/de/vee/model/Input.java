@@ -56,7 +56,7 @@ public class Input implements Cloneable {
     private double ymax = 100000;
     private double[][] data = null;
     boolean withInflectionPoint = false;
-    private double[][] constraints = FunFactory.getConstraints();
+    private double[][] constraints = FunFactory.getConstraints(0);
 
 
     private double[][] constraints2 = {
@@ -378,7 +378,7 @@ public class Input implements Cloneable {
     public double[] getSlice(double x) {
         int nslice = 0;
         for (double u : slice) {
-            if (x > u + SuperPose.SIGMA) {
+            if (x > u/* + SuperPose.SIGMA*/) {
                 nslice++;
             }
         }

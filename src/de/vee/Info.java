@@ -42,7 +42,7 @@ import static org.jfree.util.ObjectUtilities.getClassLoader;
 class Info {
     private static final int MAX = 9;
     private static final String RES_FOLDER = "tpl";
-    private static final String IMAGES_FOLDER = "gr";
+    static final String IMAGES_FOLDER = "gr";
     private final int width;
     private final int height;
 
