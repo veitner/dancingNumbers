@@ -47,7 +47,7 @@ public class CSVInput {
     static final Map<String, List<CSVRecord>> data = new HashMap<>();
 
     enum IDX {
-        DATEREP(0), DAY(1), MONTH(2), YEAR(3), CASES(4), DEATHS(5), COUNTRIESANDTERRITORIES(6), GEOID(7), COUNTRYTERRITORYCODE(8), POPDATA2018(9), CONTINENTEXP(10);
+        DATE(0), DAY(1), MONTH(2), YEAR(3), CASES(4), DEATHS(5), COUNTRIESANDTERRITORIES(6), GEOID(7), COUNTRYTERRITORYCODE(8), POPDATA(9), CONTINENTEXP(10);
         private final int id;
 
         IDX(int id) {
@@ -127,9 +127,9 @@ public class CSVInput {
         String countriesAndTerritories;
         String geoId;
         String countryterritoryCode;
-        long popData2018;
+        long popData;
 
-        CSVRecord(String date, String day, String month, String year, String cases, String deaths, String countriesAndTerritories, String geoId, String countryterritoryCode, String popData2018) {
+        CSVRecord(String date, String day, String month, String year, String cases, String deaths, String countriesAndTerritories, String geoId, String countryterritoryCode, String popData) {
             this.date = date;
             this.day = Integer.valueOf(day);
             this.month = Integer.valueOf(month);
@@ -139,7 +139,7 @@ public class CSVInput {
             this.countriesAndTerritories = countriesAndTerritories;
             this.geoId = geoId;
             this.countryterritoryCode = countryterritoryCode;
-            this.popData2018 = Long.valueOf(popData2018);
+            this.popData = Long.valueOf(popData);
         }
 
         /**
@@ -189,11 +189,21 @@ public class CSVInput {
             for (int i = 0; i < header.size(); i++) {
                 idx[i] = -1;
             }
-            for (int i = 0; i < header.size(); i++) {
-                String key = header.get(i);
+            idx[0] = 0;
+            IDX[] values = IDX.values();
+            for (String s : header) {
+                String key = s.toUpperCase().trim();
                 try {
-                    IDX v = IDX.valueOf(key.toUpperCase());
-                    idx[v.id] = i;
+                    for (int j = 0; j < values.length; j++) {
+                        IDX idx1 = (IDX) values[j];
+                        String name = (idx1.name());
+                        if (key.contains(name)) {
+                            idx[idx1.id] = j;
+                            break;
+                        }
+                    }
+                    //          IDX v = IDX.valueOf(key);
+                    //          idx[v.id] = i;
                 } catch (IllegalArgumentException iae) {
                     iae.printStackTrace();
                 }
@@ -207,7 +217,7 @@ public class CSVInput {
                     while (st.hasMoreTokens()) {
                         entry.add(st.nextToken());
                     }
-                    String dateRep = entry.get(idx[IDX.DATEREP.id]);
+                    String dateRep = entry.get(idx[IDX.DATE.id]);
                     String day = entry.get(idx[IDX.DAY.id]);
                     String month = entry.get(idx[IDX.MONTH.id]);
                     String year = entry.get(idx[IDX.YEAR.id]);
@@ -216,9 +226,9 @@ public class CSVInput {
                     String geoId = entry.get(idx[IDX.GEOID.id]);
 //                    String continentExp = entry.get(idx[IDX.CONTINENTEXP.id]);
                     String countryterritoryCode = entry.get(idx[IDX.COUNTRYTERRITORYCODE.id]);
-                    String popData2018 = entry.get(idx[IDX.POPDATA2018.id]);
+                    String popData = entry.get(idx[IDX.POPDATA.id]);
                     String countriesAndTerritories = entry.get(idx[IDX.COUNTRIESANDTERRITORIES.id]);
-                    CSVRecord record = new CSVRecord(dateRep, day, month, year, cases, deaths, countriesAndTerritories, geoId, countryterritoryCode, popData2018);
+                    CSVRecord record = new CSVRecord(dateRep, day, month, year, cases, deaths, countriesAndTerritories, geoId, countryterritoryCode, popData);
                     List<CSVRecord> lst = (data.computeIfAbsent(record.countriesAndTerritories, k -> new ArrayList<>()));
                     lst.add(record);
                     count++;
@@ -266,7 +276,7 @@ public class CSVInput {
 //        long deaths = 0;
         long oc = 0;
         for (CSVRecord record : lst) {
-            if (N[0] != record.popData2018) N[0] = record.popData2018;
+            if (N[0] != record.popData) N[0] = record.popData;
             long day = record.daysSinceStart();
             if ((day > 20) && (record.cases > 0)) {
                 if (oc != record.cases) {
